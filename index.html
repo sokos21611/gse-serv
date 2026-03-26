@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#312e81">
+<title>총무 서비스</title>
+<style>
+:root {
+  --primary: #6366f1; --primary-dark: #4f46e5; --primary-light: #eef2ff;
+  --accent: #8b5cf6; --accent-light: #f5f3ff;
+  --bg: #fafafa; --surface: #ffffff; --surface-hover: #f8fafc;
+  --text: #1e293b; --text-secondary: #64748b; --text-muted: #94a3b8;
+  --border: #e2e8f0; --border-light: #f1f5f9;
+  --success: #10b981; --success-bg: #ecfdf5;
+  --warning: #f59e0b; --warning-bg: #fffbeb;
+  --danger: #ef4444; --danger-bg: #fef2f2;
+  --info: #3b82f6; --info-bg: #eff6ff;
+  --radius: 16px; --radius-sm: 10px; --radius-xs: 6px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+html { background: linear-gradient(135deg, #312e81, #4f46e5); }
+body {
+  font-family: -apple-system, 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh;
+  max-width: 430px; margin: 0 auto;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Header */
+.header {
+  background: linear-gradient(135deg, #312e81, #4f46e5, #6366f1);
+  color: white;
+  padding: calc(20px + env(safe-area-inset-top, 0px)) 20px 24px;
+  position: relative; overflow: hidden;
+}
+.header::before {
+  content: ''; position: absolute; top: -40px; right: -40px;
+  width: 120px; height: 120px; border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+}
+.header::after {
+  content: ''; position: absolute; bottom: -20px; left: 30%;
+  width: 80px; height: 80px; border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+}
+.header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; position: relative; z-index: 1; }
+.header-logo { font-size: 15px; font-weight: 800; letter-spacing: -0.3px; }
+.header-badge {
+  font-size: 10px; font-weight: 600; padding: 4px 10px;
+  background: rgba(255,255,255,0.15); border-radius: 20px;
+  backdrop-filter: blur(4px);
+}
+.header-greeting { position: relative; z-index: 1; }
+.header-greeting h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; }
+.header-greeting p { font-size: 13px; color: rgba(255,255,255,0.7); }
+
+/* Quick Actions */
+.quick-actions {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  padding: 16px 20px 0; margin-top: -12px; position: relative; z-index: 2;
+}
+.quick-btn {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface); border-radius: var(--radius);
+  padding: 16px; box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-light);
+  text-decoration: none; color: var(--text);
+  transition: all var(--transition); cursor: pointer;
+  min-height: 64px;
+}
+.quick-btn:active { transform: scale(0.97); }
+.quick-btn .icon {
+  width: 42px; height: 42px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.quick-btn .icon.report-icon { background: linear-gradient(135deg, #fee2e2, #fecaca); }
+.quick-btn .icon.status-icon { background: linear-gradient(135deg, #e0e7ff, #c7d2fe); }
+.quick-btn .label { font-size: 13px; font-weight: 700; }
+.quick-btn .sublabel { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+
+/* Section */
+.section { padding: 24px 20px 0; }
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.section-title { font-size: 16px; font-weight: 800; letter-spacing: -0.3px; }
+.section-link {
+  font-size: 12px; color: var(--primary); font-weight: 600;
+  text-decoration: none;
+}
+
+/* Recent Reports */
+.report-card {
+  background: var(--surface); border-radius: var(--radius);
+  padding: 16px; box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 14px;
+  text-decoration: none; color: inherit;
+  transition: all var(--transition); cursor: pointer;
+  min-height: 56px;
+}
+.report-card:active { transform: scale(0.99); border-color: var(--primary); }
+.report-icon-wrap {
+  width: 44px; height: 44px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+  background: var(--border-light);
+}
+.report-info { flex: 1; min-width: 0; }
+.report-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.report-meta { font-size: 11px; color: var(--text-muted); }
+.report-status {
+  font-size: 10px; font-weight: 700; padding: 3px 8px;
+  border-radius: 20px; flex-shrink: 0; white-space: nowrap;
+}
+.status-접수 { background: var(--info-bg); color: var(--info); }
+.status-처리중 { background: var(--warning-bg); color: var(--warning); }
+.status-완료 { background: var(--success-bg); color: var(--success); }
+
+/* Category Grid */
+.cat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.cat-card {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  background: var(--surface); border-radius: var(--radius);
+  padding: 20px 8px; box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  text-decoration: none; color: var(--text);
+  transition: all var(--transition); cursor: pointer;
+  min-height: 88px;
+}
+.cat-card:active { transform: scale(0.96); border-color: var(--primary); }
+.cat-emoji { font-size: 30px; }
+.cat-name { font-size: 13px; font-weight: 700; }
+
+/* Asset Recognized View */
+.asset-view { padding: 20px; }
+.asset-back {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 13px; color: var(--text-secondary); font-weight: 600;
+  text-decoration: none; margin-bottom: 16px;
+}
+.asset-card {
+  background: var(--surface); border-radius: var(--radius);
+  padding: 24px; box-shadow: var(--shadow-md);
+  border: 1px solid var(--border); text-align: center;
+}
+.asset-emoji { font-size: 48px; margin-bottom: 12px; }
+.asset-name { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+.asset-detail { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
+.asset-id { font-size: 11px; color: var(--text-muted); font-family: monospace; background: var(--border-light); display: inline-block; padding: 2px 8px; border-radius: 4px; margin-top: 8px; }
+.asset-stats {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px;
+  margin-top: 20px; background: var(--border);
+  border-radius: var(--radius-xs); overflow: hidden;
+}
+.asset-stat {
+  background: var(--surface); padding: 12px 8px; text-align: center;
+}
+.asset-stat .val { font-size: 18px; font-weight: 800; color: var(--primary); }
+.asset-stat .lbl { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+.asset-report-btn {
+  display: block; width: 100%; margin-top: 20px;
+  padding: 16px; border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: white; border: none; font-size: 15px; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+  transition: all var(--transition); text-decoration: none; text-align: center;
+}
+.asset-report-btn:active { transform: scale(0.98); opacity: 0.9; }
+
+/* Empty State */
+.empty-state {
+  text-align: center; padding: 32px 20px;
+  color: var(--text-muted);
+}
+.empty-state .icon { font-size: 36px; margin-bottom: 8px; }
+.empty-state p { font-size: 13px; line-height: 1.5; }
+
+/* Bottom Nav */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 430px;
+  background: rgba(255,255,255,0.95); backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-around;
+  padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px));
+  z-index: 100;
+}
+.nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  text-decoration: none; color: var(--text-muted);
+  font-size: 10px; font-weight: 600;
+  padding: 6px 16px;
+  min-height: 44px; min-width: 64px;
+  justify-content: center;
+  transition: color var(--transition);
+}
+.nav-item.active { color: var(--primary); }
+.nav-item svg { width: 24px; height: 24px; }
+
+/* Animations */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-in { animation: fadeInUp 0.3s ease-out both; }
+.animate-in:nth-child(1) { animation-delay: 0s; }
+.animate-in:nth-child(2) { animation-delay: 0.05s; }
+.animate-in:nth-child(3) { animation-delay: 0.1s; }
+.animate-in:nth-child(4) { animation-delay: 0.15s; }
+.animate-in:nth-child(5) { animation-delay: 0.2s; }
+.animate-in:nth-child(6) { animation-delay: 0.25s; }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <a class="nav-item active" href="index.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-8 9 8"/><path d="M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10"/></svg>
+    <span>홈</span>
+  </a>
+  <a class="nav-item" href="report.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+    <span>신고</span>
+  </a>
+  <a class="nav-item" href="status.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
+    <span>내 현황</span>
+  </a>
+  <a class="nav-item" href="admin.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M6 20V4M18 20v-6"/></svg>
+    <span>관리</span>
+  </a>
+</nav>
+
+<script>
+// ── Data Layer ──
+const ASSETS = [
+  { id:'B3-P01', type:'projector', name:'B동 3층 회의실 프로젝터', model:'Epson EB-2265U', installed:'2023.06', reports:4, emoji:'📽️', location:'B동 3층' },
+  { id:'B4-PR02', type:'printer', name:'B동 4층 복합기', model:'HP LaserJet M634', installed:'2024.01', reports:2, emoji:'🖨️', location:'B동 4층' },
+  { id:'A2-REST-M', type:'restroom', name:'A동 2층 남자화장실', model:'', installed:'', reports:3, emoji:'🚻', location:'A동 2층' },
+  { id:'B3-MR2', type:'room', name:'B동 3층 회의실 2', model:'10인실', installed:'2022.03', reports:5, emoji:'🏢', location:'B동 3층' },
+  { id:'P1-GATE', type:'parking', name:'주차장 1층 게이트', model:'ParkPlus G300', installed:'2023.09', reports:1, emoji:'🅿️', location:'주차장 1층' },
+  { id:'A5-PAN', type:'pantry', name:'A동 5층 탕비실', model:'', installed:'', reports:1, emoji:'☕', location:'A동 5층' },
+];
+
+const DUMMY_REPORTS = [
+  { id:'RPT-001', title:'프로젝터 전원 안 됨', category:'IT장비', location:'B동 3층 회의실', status:'처리중', date:'2026-03-24', assetId:'B3-P01', description:'회의 중 프로젝터 전원이 갑자기 꺼짐', anonymous:false,
+    timeline:[{date:'2026-03-24 09:30', action:'접수', note:'신고 접수됨'},{date:'2026-03-24 14:00', action:'처리중', note:'담당자 배정 (김기사)'}] },
+  { id:'RPT-002', title:'복합기 용지 걸림 반복', category:'IT장비', location:'B동 4층', status:'접수', date:'2026-03-23', assetId:'B4-PR02', description:'용지 걸림이 하루 3-4회 반복', anonymous:false,
+    timeline:[{date:'2026-03-23 11:20', action:'접수', note:'신고 접수됨'}] },
+  { id:'RPT-003', title:'화장실 수도꼭지 누수', category:'시설', location:'A동 2층 남자화장실', status:'완료', date:'2026-03-20', assetId:'A2-REST-M', description:'세면대 오른쪽 수도꼭지에서 물이 계속 흘러나옴', anonymous:true,
+    timeline:[{date:'2026-03-20 08:00', action:'접수', note:'익명 신고 접수'},{date:'2026-03-20 10:30', action:'처리중', note:'배관 점검 시작'},{date:'2026-03-21 16:00', action:'완료', note:'수도꼭지 교체 완료'}] },
+  { id:'RPT-004', title:'냉방 온도 너무 낮음', category:'환경', location:'B동 3층 사무실', status:'접수', date:'2026-03-25', assetId:'', description:'오후 시간대 실내 온도가 18도 이하로 추움', anonymous:false,
+    timeline:[{date:'2026-03-25 08:45', action:'접수', note:'신고 접수됨'}] },
+];
+
+function initData() {
+  if (!localStorage.getItem('gs_assets')) localStorage.setItem('gs_assets', JSON.stringify(ASSETS));
+  if (!localStorage.getItem('gs_reports')) localStorage.setItem('gs_reports', JSON.stringify(DUMMY_REPORTS));
+}
+function getReports() { return JSON.parse(localStorage.getItem('gs_reports') || '[]'); }
+function getAssets() { return JSON.parse(localStorage.getItem('gs_assets') || '[]'); }
+
+// ── Routing ──
+const params = new URLSearchParams(location.search);
+const qrType = params.get('type');
+const qrId = params.get('id');
+
+initData();
+
+const app = document.getElementById('app');
+
+if (qrType && qrId) {
+  renderAssetView(qrType, qrId);
+} else {
+  renderHome();
+}
+
+// ── Home View ──
+function renderHome() {
+  const reports = getReports();
+  const recent = reports.slice(0, 3);
+  const statusCounts = { '접수': 0, '처리중': 0, '완료': 0 };
+  reports.forEach(r => { if (statusCounts[r.status] !== undefined) statusCounts[r.status]++; });
+
+  app.innerHTML = `
+    <div class="header">
+      <div class="header-top">
+        <div class="header-logo">총무 서비스</div>
+        <div class="header-badge">v1.0 Beta</div>
+      </div>
+      <div class="header-greeting">
+        <h2>안녕하세요 👋</h2>
+        <p>불편한 점이 있으면 바로 신고해 주세요</p>
+      </div>
+    </div>
+
+    <div class="quick-actions">
+      <a class="quick-btn animate-in" href="report.html">
+        <div class="icon report-icon">🚨</div>
+        <div>
+          <div class="label">빠른 신고</div>
+          <div class="sublabel">불편사항 바로 접수</div>
+        </div>
+      </a>
+      <a class="quick-btn animate-in" href="status.html">
+        <div class="icon status-icon">📋</div>
+        <div>
+          <div class="label">내 현황</div>
+          <div class="sublabel">접수 ${statusCounts['접수']} · 처리중 ${statusCounts['처리중']}</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">최근 신고</div>
+        <a class="section-link" href="status.html">전체보기 →</a>
+      </div>
+      ${recent.length > 0 ? recent.map((r, i) => `
+        <a class="report-card animate-in" href="status.html#${r.id}" style="animation-delay:${i * 0.05}s">
+          <div class="report-icon-wrap">${getCategoryEmoji(r.category)}</div>
+          <div class="report-info">
+            <div class="report-title">${r.title}</div>
+            <div class="report-meta">${r.location} · ${formatDate(r.date)}</div>
+          </div>
+          <span class="report-status status-${r.status}">${r.status}</span>
+        </a>
+      `).join('') : `
+        <div class="empty-state">
+          <div class="icon">📭</div>
+          <p>아직 신고 내역이 없습니다</p>
+        </div>
+      `}
+    </div>
+
+    <div class="section" style="padding-bottom: 24px;">
+      <div class="section-header">
+        <div class="section-title">카테고리별 신고</div>
+      </div>
+      <div class="cat-grid">
+        <a class="cat-card animate-in" href="report.html?category=facility">
+          <div class="cat-emoji">🏗️</div><div class="cat-name">시설</div>
+        </a>
+        <a class="cat-card animate-in" href="report.html?category=environment">
+          <div class="cat-emoji">🌡️</div><div class="cat-name">환경</div>
+        </a>
+        <a class="cat-card animate-in" href="report.html?category=it">
+          <div class="cat-emoji">💻</div><div class="cat-name">IT장비</div>
+        </a>
+        <a class="cat-card animate-in" href="report.html?category=cleaning">
+          <div class="cat-emoji">🧹</div><div class="cat-name">청소</div>
+        </a>
+        <a class="cat-card animate-in" href="report.html?category=parking">
+          <div class="cat-emoji">🚗</div><div class="cat-name">주차</div>
+        </a>
+        <a class="cat-card animate-in" href="report.html?category=other">
+          <div class="cat-emoji">📝</div><div class="cat-name">기타</div>
+        </a>
+      </div>
+    </div>
+  `;
+}
+
+// ── Asset View ──
+function renderAssetView(type, id) {
+  const assets = getAssets();
+  const asset = assets.find(a => a.id === id) || assets.find(a => a.type === type);
+
+  if (!asset) {
+    app.innerHTML = `
+      <div class="asset-view">
+        <a class="asset-back" href="index.html">← 홈으로</a>
+        <div class="empty-state">
+          <div class="icon">❓</div>
+          <p>자산 정보를 찾을 수 없습니다<br><small style="color:var(--text-muted)">${type} / ${id}</small></p>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const reports = getReports().filter(r => r.assetId === asset.id);
+
+  app.innerHTML = `
+    <div class="asset-view">
+      <a class="asset-back" href="index.html">← 홈으로</a>
+      <div class="asset-card animate-in">
+        <div class="asset-emoji">${asset.emoji}</div>
+        <div class="asset-name">${asset.name}</div>
+        ${asset.model ? `<div class="asset-detail">${asset.model}</div>` : ''}
+        ${asset.location ? `<div class="asset-detail">${asset.location}</div>` : ''}
+        <div class="asset-id">${asset.type}:${asset.id}</div>
+        <div class="asset-stats">
+          <div class="asset-stat">
+            <div class="val">${asset.reports}</div>
+            <div class="lbl">누적 신고</div>
+          </div>
+          <div class="asset-stat">
+            <div class="val">${asset.installed || '-'}</div>
+            <div class="lbl">설치일</div>
+          </div>
+          <div class="asset-stat">
+            <div class="val">${reports.filter(r=>r.status!=='완료').length}</div>
+            <div class="lbl">미처리</div>
+          </div>
+        </div>
+      </div>
+      <a class="asset-report-btn animate-in" href="report.html?type=${asset.type}&id=${asset.id}" style="animation-delay:0.1s">
+        🚨 이 자산 신고하기
+      </a>
+
+      ${reports.length > 0 ? `
+        <div class="section" style="padding:20px 0 0;">
+          <div class="section-title" style="margin-bottom:12px;">이 자산의 신고 이력</div>
+          ${reports.map((r, i) => `
+            <a class="report-card animate-in" href="status.html#${r.id}" style="animation-delay:${(i+2)*0.05}s">
+              <div class="report-icon-wrap">${getCategoryEmoji(r.category)}</div>
+              <div class="report-info">
+                <div class="report-title">${r.title}</div>
+                <div class="report-meta">${formatDate(r.date)}</div>
+              </div>
+              <span class="report-status status-${r.status}">${r.status}</span>
+            </a>
+          `).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+// ── Helpers ──
+function getCategoryEmoji(cat) {
+  const map = { '시설':'🏗️', '환경':'🌡️', 'IT장비':'💻', '청소':'🧹', '주차':'🚗', '기타':'📝' };
+  return map[cat] || '📋';
+}
+function formatDate(d) {
+  const diff = Math.floor((new Date() - new Date(d)) / 86400000);
+  if (diff === 0) return '오늘';
+  if (diff === 1) return '어제';
+  if (diff < 7) return `${diff}일 전`;
+  return d;
+}
+</script>
+</body>
+</html>

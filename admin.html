@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#fafafa">
+<title>관리자 — 총무 서비스</title>
+<style>
+:root {
+  --primary: #6366f1; --primary-dark: #4f46e5; --primary-light: #eef2ff;
+  --accent: #8b5cf6; --accent-light: #f5f3ff;
+  --bg: #fafafa; --surface: #ffffff;
+  --text: #1e293b; --text-secondary: #64748b; --text-muted: #94a3b8;
+  --border: #e2e8f0; --border-light: #f1f5f9;
+  --success: #10b981; --success-bg: #ecfdf5;
+  --warning: #f59e0b; --warning-bg: #fffbeb;
+  --danger: #ef4444; --danger-bg: #fef2f2;
+  --info: #3b82f6; --info-bg: #eff6ff;
+  --radius: 16px; --radius-sm: 10px; --radius-xs: 6px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: -apple-system, 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh;
+  max-width: 430px; margin: 0 auto;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+}
+
+.top-bar {
+  display: flex; align-items: center; gap: 12px;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 20px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 50;
+}
+.top-bar h1 { font-size: 17px; font-weight: 800; flex: 1; }
+.admin-badge {
+  font-size: 10px; font-weight: 700; padding: 3px 10px;
+  background: var(--accent-light); color: var(--accent);
+  border-radius: 20px;
+}
+
+/* Tabs */
+.tabs {
+  display: flex; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 53px; z-index: 49;
+}
+.tab {
+  flex: 1; padding: 14px 8px; text-align: center;
+  font-size: 14px; font-weight: 600; color: var(--text-muted);
+  cursor: pointer; position: relative;
+  transition: color var(--transition);
+  min-height: 48px;
+}
+.tab.active { color: var(--primary); }
+.tab.active::after {
+  content: ''; position: absolute; bottom: 0; left: 20%; right: 20%;
+  height: 2px; background: var(--primary); border-radius: 1px;
+}
+
+/* Dashboard Stats */
+.dash-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  padding: 16px 20px;
+}
+.dash-stat {
+  background: var(--surface); border-radius: var(--radius-sm);
+  padding: 16px 12px; text-align: center;
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+}
+.dash-stat .val { font-size: 24px; font-weight: 800; }
+.dash-stat .lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-weight: 600; }
+.dash-stat.pending .val { color: var(--info); }
+.dash-stat.progress .val { color: var(--warning); }
+.dash-stat.done .val { color: var(--success); }
+
+/* Report Rows */
+.admin-list { padding: 0 20px 20px; }
+.admin-card {
+  background: var(--surface); border-radius: var(--radius-sm);
+  padding: 14px 16px; border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm); margin-bottom: 8px;
+}
+.admin-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }
+.admin-title { font-size: 14px; font-weight: 700; flex: 1; margin-right: 8px; }
+.admin-id { font-size: 11px; color: var(--text-muted); font-family: monospace; }
+.admin-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
+.status-select {
+  padding: 6px 12px; border-radius: 20px;
+  font-size: 12px; font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--surface); color: var(--text);
+  font-family: inherit; cursor: pointer;
+  transition: all var(--transition);
+}
+.status-select:focus { outline: none; border-color: var(--primary); }
+
+/* Asset Tab */
+.asset-list { padding: 0 20px 20px; }
+.asset-card {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--surface); border-radius: var(--radius-sm);
+  padding: 14px 16px; border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm); margin-bottom: 8px;
+}
+.asset-emoji { font-size: 28px; }
+.asset-info { flex: 1; }
+.asset-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+.asset-detail { font-size: 11px; color: var(--text-muted); }
+.asset-status-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.dot-good { background: var(--success); }
+.dot-warn { background: var(--warning); }
+.dot-bad { background: var(--danger); }
+
+/* Schedule Tab */
+.schedule-section { padding: 0 20px 20px; }
+.schedule-month {
+  font-size: 15px; font-weight: 800; padding: 16px 0 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.schedule-item {
+  display: flex; gap: 14px;
+  background: var(--surface); border-radius: var(--radius-sm);
+  padding: 14px 16px; border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm); margin-bottom: 8px;
+}
+.sched-date {
+  width: 44px; text-align: center; flex-shrink: 0;
+}
+.sched-day { font-size: 20px; font-weight: 800; color: var(--primary); }
+.sched-dow { font-size: 10px; color: var(--text-muted); font-weight: 600; }
+.sched-info { flex: 1; }
+.sched-title { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+.sched-desc { font-size: 12px; color: var(--text-secondary); }
+.sched-type {
+  font-size: 10px; font-weight: 600; padding: 2px 8px;
+  border-radius: 4px; display: inline-block; margin-top: 4px;
+}
+.type-inspect { background: var(--info-bg); color: var(--info); }
+.type-replace { background: var(--warning-bg); color: var(--warning); }
+.type-check { background: var(--success-bg); color: var(--success); }
+
+/* History */
+.history-title { font-size: 15px; font-weight: 800; padding: 20px 20px 12px; }
+.history-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 20px; border-bottom: 1px solid var(--border-light);
+}
+.history-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+.history-text { font-size: 13px; flex: 1; }
+.history-date { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
+
+.section-empty { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 14px; }
+
+/* Bottom Nav */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 430px;
+  background: rgba(255,255,255,0.95); backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-around;
+  padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px));
+  z-index: 100;
+}
+.nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  text-decoration: none; color: var(--text-muted);
+  font-size: 10px; font-weight: 600;
+  padding: 6px 16px;
+  min-height: 44px; min-width: 64px;
+  justify-content: center;
+}
+.nav-item.active { color: var(--primary); }
+.nav-item svg { width: 24px; height: 24px; }
+
+/* Toast */
+.toast {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-80px);
+  background: var(--text); color: white;
+  padding: 10px 20px; border-radius: 20px;
+  font-size: 13px; font-weight: 600;
+  z-index: 300; transition: transform 0.3s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-in { animation: fadeInUp 0.25s ease-out both; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <h1>관리자</h1>
+  <span class="admin-badge">Admin</span>
+</div>
+
+<div class="tabs" id="tabs"></div>
+<div id="content"></div>
+<div class="toast" id="toast"></div>
+
+<nav class="bottom-nav">
+  <a class="nav-item" href="index.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-8 9 8"/><path d="M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10"/></svg>
+    <span>홈</span>
+  </a>
+  <a class="nav-item" href="report.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+    <span>신고</span>
+  </a>
+  <a class="nav-item" href="status.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
+    <span>내 현황</span>
+  </a>
+  <a class="nav-item active" href="admin.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M6 20V4M18 20v-6"/></svg>
+    <span>관리</span>
+  </a>
+</nav>
+
+<script>
+let activeTab = 'reports';
+const TAB_LIST = [
+  { key:'reports', label:'접수현황' },
+  { key:'assets', label:'자산관리' },
+  { key:'schedule', label:'점검일정' },
+];
+
+const SCHEDULE_DATA = [
+  { date:'2026-03-27', dow:'목', title:'B동 3층 프로젝터 정기점검', desc:'Epson EB-2265U 필터 청소 + 램프 확인', type:'inspect' },
+  { date:'2026-03-28', dow:'금', title:'주차장 게이트 점검', desc:'ParkPlus G300 센서 테스트', type:'check' },
+  { date:'2026-04-02', dow:'수', title:'B동 4층 복합기 토너 교체', desc:'HP LaserJet M634 토너 + 드럼 교체', type:'replace' },
+  { date:'2026-04-07', dow:'월', title:'엘리베이터 정기 안전검사', desc:'A동/B동 전체 승강기 법정 검사', type:'inspect' },
+  { date:'2026-04-15', dow:'화', title:'소방 설비 점검', desc:'전 구역 소화기/스프링클러 점검', type:'inspect' },
+];
+
+const HISTORY_DATA = [
+  { text:'B동 3층 프로젝터 램프 교체', date:'2026-03-10' },
+  { text:'A동 2층 화장실 수도꼭지 교체', date:'2026-03-21' },
+  { text:'B동 4층 복합기 용지함 수리', date:'2026-02-28' },
+  { text:'주차장 1층 게이트 센서 교체', date:'2026-02-15' },
+  { text:'A동 5층 탕비실 정수기 필터 교체', date:'2026-01-20' },
+];
+
+function getReports() { return JSON.parse(localStorage.getItem('gs_reports') || '[]'); }
+function getAssets() { return JSON.parse(localStorage.getItem('gs_assets') || '[]'); }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function render() {
+  // Tabs
+  document.getElementById('tabs').innerHTML = TAB_LIST.map(t =>
+    `<div class="tab ${activeTab === t.key ? 'active' : ''}" onclick="activeTab='${t.key}';render()">${t.label}</div>`
+  ).join('');
+
+  if (activeTab === 'reports') renderReports();
+  else if (activeTab === 'assets') renderAssets();
+  else if (activeTab === 'schedule') renderSchedule();
+}
+
+function renderReports() {
+  const reports = getReports();
+  const counts = { '접수': 0, '처리중': 0, '완료': 0 };
+  reports.forEach(r => { if (counts[r.status] !== undefined) counts[r.status]++; });
+
+  document.getElementById('content').innerHTML = `
+    <div class="dash-stats">
+      <div class="dash-stat pending"><div class="val">${counts['접수']}</div><div class="lbl">접수</div></div>
+      <div class="dash-stat progress"><div class="val">${counts['처리중']}</div><div class="lbl">처리중</div></div>
+      <div class="dash-stat done"><div class="val">${counts['완료']}</div><div class="lbl">완료</div></div>
+    </div>
+    <div class="admin-list">
+      ${reports.map((r, i) => `
+        <div class="admin-card animate-in" style="animation-delay:${i * 0.03}s">
+          <div class="admin-card-top">
+            <div class="admin-title">${r.title}</div>
+            <div class="admin-id">${r.id}</div>
+          </div>
+          <div class="admin-meta">
+            <span>${r.category}</span>
+            <span>📍 ${r.location}</span>
+            <span>${r.date}</span>
+            ${r.anonymous ? '<span style="color:var(--accent)">익명</span>' : ''}
+          </div>
+          <select class="status-select" onchange="changeStatus('${r.id}', this.value)">
+            <option value="접수" ${r.status==='접수'?'selected':''}>접수</option>
+            <option value="처리중" ${r.status==='처리중'?'selected':''}>처리중</option>
+            <option value="완료" ${r.status==='완료'?'selected':''}>완료</option>
+          </select>
+        </div>
+      `).join('')}
+      ${reports.length === 0 ? '<div class="section-empty">신고 내역이 없습니다</div>' : ''}
+    </div>`;
+}
+
+function changeStatus(id, newStatus) {
+  const reports = getReports();
+  const r = reports.find(x => x.id === id);
+  if (!r || r.status === newStatus) return;
+
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0];
+  const timeStr = now.toTimeString().slice(0,5);
+
+  r.status = newStatus;
+  r.timeline = r.timeline || [];
+  r.timeline.push({ date: `${dateStr} ${timeStr}`, action: newStatus, note: `상태 변경: ${newStatus}` });
+
+  localStorage.setItem('gs_reports', JSON.stringify(reports));
+  showToast(`${r.id} → ${newStatus}`);
+  render();
+}
+
+function renderAssets() {
+  const assets = getAssets();
+  document.getElementById('content').innerHTML = `
+    <div class="asset-list" style="padding-top:16px;">
+      ${assets.map((a, i) => {
+        const dotClass = a.reports >= 4 ? 'dot-bad' : a.reports >= 2 ? 'dot-warn' : 'dot-good';
+        return `
+          <div class="asset-card animate-in" style="animation-delay:${i * 0.04}s">
+            <div class="asset-emoji">${a.emoji}</div>
+            <div class="asset-info">
+              <div class="asset-name">${a.name}</div>
+              <div class="asset-detail">${a.model || a.location} ${a.installed ? '· 설치 ' + a.installed : ''} · 신고 ${a.reports}건</div>
+            </div>
+            <div class="asset-status-dot ${dotClass}" title="${a.reports}건 신고"></div>
+          </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function renderSchedule() {
+  const grouped = {};
+  SCHEDULE_DATA.forEach(s => {
+    const month = s.date.substring(0, 7);
+    if (!grouped[month]) grouped[month] = [];
+    grouped[month].push(s);
+  });
+
+  const typeLabels = { inspect:'정기점검', replace:'교체', check:'안전검사' };
+
+  let html = '<div class="schedule-section" style="padding-top:4px;">';
+  for (const [month, items] of Object.entries(grouped)) {
+    const [y, m] = month.split('-');
+    html += `<div class="schedule-month">📅 ${y}년 ${parseInt(m)}월</div>`;
+    items.forEach((s, i) => {
+      const day = parseInt(s.date.split('-')[2]);
+      html += `
+        <div class="schedule-item animate-in" style="animation-delay:${i * 0.04}s">
+          <div class="sched-date">
+            <div class="sched-day">${day}</div>
+            <div class="sched-dow">${s.dow}</div>
+          </div>
+          <div class="sched-info">
+            <div class="sched-title">${s.title}</div>
+            <div class="sched-desc">${s.desc}</div>
+            <span class="sched-type type-${s.type}">${typeLabels[s.type] || s.type}</span>
+          </div>
+        </div>`;
+    });
+  }
+  html += '</div>';
+
+  html += '<div class="history-title">최근 교체 이력</div>';
+  HISTORY_DATA.forEach(h => {
+    html += `
+      <div class="history-item">
+        <div class="history-dot"></div>
+        <div class="history-text">${h.text}</div>
+        <div class="history-date">${h.date}</div>
+      </div>`;
+  });
+
+  document.getElementById('content').innerHTML = html;
+}
+
+render();
+</script>
+</body>
+</html>

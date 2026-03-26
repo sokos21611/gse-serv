@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#fafafa">
+<title>내 현황 — 총무 서비스</title>
+<style>
+:root {
+  --primary: #6366f1; --primary-dark: #4f46e5; --primary-light: #eef2ff;
+  --accent: #8b5cf6; --accent-light: #f5f3ff;
+  --bg: #fafafa; --surface: #ffffff;
+  --text: #1e293b; --text-secondary: #64748b; --text-muted: #94a3b8;
+  --border: #e2e8f0; --border-light: #f1f5f9;
+  --success: #10b981; --success-bg: #ecfdf5;
+  --warning: #f59e0b; --warning-bg: #fffbeb;
+  --danger: #ef4444; --danger-bg: #fef2f2;
+  --info: #3b82f6; --info-bg: #eff6ff;
+  --radius: 16px; --radius-sm: 10px; --radius-xs: 6px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: -apple-system, 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh;
+  max-width: 430px; margin: 0 auto;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Top Bar */
+.top-bar {
+  display: flex; align-items: center; gap: 12px;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 20px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 50;
+}
+.top-bar h1 { font-size: 17px; font-weight: 800; flex: 1; }
+
+/* Stats */
+.stats-row {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  padding: 16px 20px;
+}
+.stat-card {
+  background: var(--surface); border-radius: var(--radius);
+  padding: 14px 8px; text-align: center;
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+  cursor: pointer; transition: all var(--transition);
+  min-height: 64px;
+}
+.stat-card:active { transform: scale(0.96); }
+.stat-card.active { border-color: var(--primary); background: var(--primary-light); }
+.stat-val { font-size: 22px; font-weight: 800; }
+.stat-card.active .stat-val { color: var(--primary); }
+.stat-label { font-size: 10px; color: var(--text-muted); margin-top: 2px; font-weight: 600; }
+
+/* Filter Tabs */
+.filter-tabs {
+  display: flex; gap: 6px; padding: 0 20px 16px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+.filter-tab {
+  padding: 7px 16px; border-radius: 20px;
+  font-size: 13px; font-weight: 600;
+  background: var(--surface); color: var(--text-secondary);
+  border: 1px solid var(--border);
+  cursor: pointer; transition: all var(--transition);
+  white-space: nowrap; flex-shrink: 0;
+}
+.filter-tab:active { transform: scale(0.96); }
+.filter-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+/* Report List */
+.report-list { padding: 0 20px; }
+.report-card {
+  background: var(--surface); border-radius: var(--radius);
+  padding: 16px; box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  margin-bottom: 10px;
+  cursor: pointer; transition: all var(--transition);
+  min-height: 56px;
+}
+.report-card:active { transform: scale(0.99); border-color: var(--primary); }
+.report-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+.report-title { font-size: 15px; font-weight: 700; flex: 1; margin-right: 8px; }
+.report-status {
+  font-size: 10px; font-weight: 700; padding: 3px 10px;
+  border-radius: 20px; flex-shrink: 0;
+}
+.status-접수 { background: var(--info-bg); color: var(--info); }
+.status-처리중 { background: var(--warning-bg); color: var(--warning); }
+.status-완료 { background: var(--success-bg); color: var(--success); }
+.report-meta {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 12px; color: var(--text-muted);
+}
+.report-meta-item { display: flex; align-items: center; gap: 4px; }
+.report-cat-badge {
+  font-size: 11px; font-weight: 600; color: var(--text-secondary);
+  background: var(--border-light); padding: 2px 8px; border-radius: 4px;
+}
+.anon-badge {
+  font-size: 10px; font-weight: 600; color: var(--accent);
+  background: var(--accent-light); padding: 2px 8px; border-radius: 4px;
+}
+
+/* Empty */
+.empty-state { text-align: center; padding: 48px 20px; color: var(--text-muted); }
+.empty-state .icon { font-size: 40px; margin-bottom: 8px; }
+.empty-state p { font-size: 14px; line-height: 1.5; }
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+  z-index: 200; display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: auto; }
+.modal {
+  background: var(--surface); border-radius: 20px 20px 0 0;
+  width: 100%; max-width: 520px; max-height: 85vh;
+  padding: 24px; overflow-y: auto;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal-handle {
+  width: 36px; height: 4px; border-radius: 2px;
+  background: var(--border); margin: 0 auto 20px;
+}
+.modal-title { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+.modal-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+
+/* Timeline */
+.timeline { position: relative; padding-left: 24px; }
+.timeline::before {
+  content: ''; position: absolute; left: 7px; top: 4px; bottom: 4px;
+  width: 2px; background: var(--border);
+}
+.tl-item { position: relative; padding-bottom: 20px; }
+.tl-item:last-child { padding-bottom: 0; }
+.tl-dot {
+  position: absolute; left: -24px; top: 2px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--border); border: 3px solid var(--bg);
+  z-index: 1;
+}
+.tl-item:first-child .tl-dot { background: var(--primary); }
+.tl-item.done .tl-dot { background: var(--success); }
+.tl-date { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
+.tl-action { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+.tl-note { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+
+/* Detail Info */
+.detail-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-light); }
+.detail-row { display: flex; justify-content: space-between; padding: 8px 0; }
+.detail-key { font-size: 13px; color: var(--text-muted); }
+.detail-val { font-size: 13px; font-weight: 600; }
+
+.modal-close-btn {
+  display: block; width: 100%; margin-top: 20px;
+  padding: 14px; border-radius: var(--radius-sm);
+  background: var(--border-light); color: var(--text-secondary);
+  border: none; font-size: 14px; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+}
+
+/* Bottom Nav */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 430px;
+  background: rgba(255,255,255,0.95); backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-around;
+  padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px));
+  z-index: 100;
+}
+.nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  text-decoration: none; color: var(--text-muted);
+  font-size: 10px; font-weight: 600;
+  padding: 6px 16px;
+  min-height: 44px; min-width: 64px;
+  justify-content: center;
+}
+.nav-item.active { color: var(--primary); }
+.nav-item svg { width: 24px; height: 24px; }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-in { animation: fadeInUp 0.25s ease-out both; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <h1>내 신고 현황</h1>
+</div>
+
+<div id="stats"></div>
+<div id="filters"></div>
+<div id="list"></div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+
+<nav class="bottom-nav">
+  <a class="nav-item" href="index.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-8 9 8"/><path d="M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10"/></svg>
+    <span>홈</span>
+  </a>
+  <a class="nav-item" href="report.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+    <span>신고</span>
+  </a>
+  <a class="nav-item active" href="status.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
+    <span>내 현황</span>
+  </a>
+  <a class="nav-item" href="admin.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M6 20V4M18 20v-6"/></svg>
+    <span>관리</span>
+  </a>
+</nav>
+
+<script>
+let filter = '전체';
+
+function getReports() { return JSON.parse(localStorage.getItem('gs_reports') || '[]'); }
+
+function formatDate(d) {
+  const diff = Math.floor((new Date() - new Date(d)) / 86400000);
+  if (diff === 0) return '오늘';
+  if (diff === 1) return '어제';
+  if (diff < 7) return `${diff}일 전`;
+  return d;
+}
+
+function render() {
+  const reports = getReports();
+  const counts = { '전체': reports.length, '접수': 0, '처리중': 0, '완료': 0 };
+  reports.forEach(r => { if (counts[r.status] !== undefined) counts[r.status]++; });
+
+  document.getElementById('stats').innerHTML = `
+    <div class="stats-row">
+      ${['전체','접수','처리중','완료'].map(s => `
+        <div class="stat-card ${filter === s ? 'active' : ''}" onclick="filter='${s}';render()">
+          <div class="stat-val">${counts[s]}</div>
+          <div class="stat-label">${s}</div>
+        </div>
+      `).join('')}
+    </div>`;
+
+  const filtered = filter === '전체' ? reports : reports.filter(r => r.status === filter);
+
+  document.getElementById('list').innerHTML = `
+    <div class="report-list">
+      ${filtered.length > 0 ? filtered.map((r, i) => `
+        <div class="report-card animate-in" style="animation-delay:${i * 0.04}s" onclick="openDetail('${r.id}')">
+          <div class="report-top">
+            <div class="report-title">${r.title}</div>
+            <span class="report-status status-${r.status}">${r.status}</span>
+          </div>
+          <div class="report-meta">
+            <span class="report-cat-badge">${r.category}</span>
+            <span class="report-meta-item">📍 ${r.location}</span>
+            <span class="report-meta-item">${formatDate(r.date)}</span>
+            ${r.anonymous ? '<span class="anon-badge">익명</span>' : ''}
+          </div>
+        </div>
+      `).join('') : `
+        <div class="empty-state">
+          <div class="icon">📭</div>
+          <p>"${filter}" 상태의 신고가 없습니다</p>
+        </div>
+      `}
+    </div>`;
+
+  // Check hash for auto-open
+  const hash = location.hash.replace('#', '');
+  if (hash) {
+    const report = reports.find(r => r.id === hash);
+    if (report) { location.hash = ''; openDetail(report.id); }
+  }
+}
+
+function openDetail(id) {
+  const report = getReports().find(r => r.id === id);
+  if (!report) return;
+
+  const modal = document.getElementById('modal');
+  modal.innerHTML = `
+    <div class="modal-handle"></div>
+    <div class="modal-title">${report.title}</div>
+    <div class="modal-subtitle">${report.id} · ${report.date}</div>
+
+    <div class="timeline">
+      ${(report.timeline || []).reverse().map((t, i) => `
+        <div class="tl-item ${t.action === '완료' ? 'done' : ''}">
+          <div class="tl-dot"></div>
+          <div class="tl-date">${t.date}</div>
+          <div class="tl-action">${t.action}</div>
+          <div class="tl-note">${t.note}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-row"><span class="detail-key">카테고리</span><span class="detail-val">${report.category}</span></div>
+      <div class="detail-row"><span class="detail-key">위치</span><span class="detail-val">${report.location}</span></div>
+      <div class="detail-row"><span class="detail-key">상태</span><span class="detail-val"><span class="report-status status-${report.status}">${report.status}</span></span></div>
+      <div class="detail-row"><span class="detail-key">익명</span><span class="detail-val">${report.anonymous ? '예' : '아니오'}</span></div>
+      ${report.description ? `<div class="detail-row"><span class="detail-key">설명</span><span class="detail-val" style="max-width:65%;text-align:right">${report.description}</span></div>` : ''}
+    </div>
+
+    <button class="modal-close-btn" onclick="closeModal()">닫기</button>
+  `;
+
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+render();
+</script>
+</body>
+</html>

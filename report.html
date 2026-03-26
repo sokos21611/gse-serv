@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#fafafa">
+<title>신고 접수 — 총무 서비스</title>
+<style>
+:root {
+  --primary: #6366f1; --primary-dark: #4f46e5; --primary-light: #eef2ff;
+  --accent: #8b5cf6; --accent-light: #f5f3ff;
+  --bg: #fafafa; --surface: #ffffff;
+  --text: #1e293b; --text-secondary: #64748b; --text-muted: #94a3b8;
+  --border: #e2e8f0; --border-light: #f1f5f9;
+  --success: #10b981; --success-bg: #ecfdf5;
+  --warning: #f59e0b; --warning-bg: #fffbeb;
+  --danger: #ef4444; --danger-bg: #fef2f2;
+  --radius: 16px; --radius-sm: 10px; --radius-xs: 6px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: -apple-system, 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh;
+  max-width: 430px; margin: 0 auto;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Top Bar */
+.top-bar {
+  display: flex; align-items: center; gap: 12px;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 20px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 50;
+}
+.top-bar a { color: var(--text-secondary); text-decoration: none; display: flex; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; margin: -10px; padding: 10px; }
+.top-bar h1 { font-size: 17px; font-weight: 800; flex: 1; }
+
+/* Progress */
+.progress-bar {
+  display: flex; align-items: center; gap: 0;
+  padding: 16px 20px 20px; background: var(--surface);
+}
+.prog-step {
+  display: flex; flex-direction: column; align-items: center;
+  flex: 1; position: relative;
+}
+.prog-dot {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--border-light); color: var(--text-muted);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+  transition: all 0.3s; z-index: 2;
+}
+.prog-step.active .prog-dot { background: var(--primary); color: white; }
+.prog-step.done .prog-dot { background: var(--success); color: white; }
+.prog-label { font-size: 10px; color: var(--text-muted); margin-top: 4px; font-weight: 600; }
+.prog-step.active .prog-label { color: var(--primary); }
+.prog-step.done .prog-label { color: var(--success); }
+.prog-line {
+  position: absolute; top: 14px; left: calc(50% + 14px); right: calc(-50% + 14px);
+  height: 2px; background: var(--border); z-index: 1;
+}
+.prog-step.done .prog-line { background: var(--success); }
+.prog-step:last-child .prog-line { display: none; }
+
+/* Step Content */
+.step-content { padding: 0 20px; }
+.step-title { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+.step-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
+
+/* Option Cards */
+.option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.option-card {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  background: var(--surface); border-radius: var(--radius);
+  padding: 22px 12px; border: 2px solid var(--border);
+  cursor: pointer; transition: all var(--transition);
+  text-align: center; min-height: 88px;
+}
+.option-card:active { transform: scale(0.97); }
+.option-card.selected { border-color: var(--primary); background: var(--primary-light); }
+.option-card .emoji { font-size: 32px; }
+.option-card .name { font-size: 14px; font-weight: 700; }
+
+/* Sub options - list style */
+.sub-list { display: flex; flex-direction: column; gap: 8px; }
+.sub-item {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--surface); border-radius: var(--radius);
+  padding: 16px 18px; border: 2px solid var(--border);
+  cursor: pointer; transition: all var(--transition);
+  min-height: 52px;
+}
+.sub-item:active { transform: scale(0.99); }
+.sub-item.selected { border-color: var(--primary); background: var(--primary-light); }
+.sub-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex-shrink: 0; transition: all var(--transition); }
+.sub-item.selected .sub-dot { background: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+.sub-name { font-size: 14px; font-weight: 600; }
+
+/* Form Inputs */
+.form-group { margin-bottom: 16px; }
+.form-label { font-size: 13px; font-weight: 700; margin-bottom: 8px; display: block; }
+.form-input {
+  width: 100%; padding: 16px 18px; border-radius: var(--radius);
+  border: 2px solid var(--border); font-size: 16px;
+  font-family: inherit; transition: border-color var(--transition);
+  background: var(--surface); color: var(--text);
+  -webkit-appearance: none; appearance: none;
+}
+.form-input:focus { outline: none; border-color: var(--primary); }
+textarea.form-input { min-height: 120px; resize: vertical; }
+
+/* Anonymous Toggle */
+.anon-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface); border-radius: var(--radius-sm);
+  padding: 14px 16px; border: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.anon-info { flex: 1; }
+.anon-label { font-size: 14px; font-weight: 600; }
+.anon-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.toggle {
+  width: 48px; height: 28px; border-radius: 14px;
+  background: var(--border); position: relative;
+  cursor: pointer; transition: background 0.3s;
+  flex-shrink: 0;
+}
+.toggle.on { background: var(--primary); }
+.toggle-knob {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: white; position: absolute; top: 3px; left: 3px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  transition: transform 0.3s;
+}
+.toggle.on .toggle-knob { transform: translateX(20px); }
+
+/* Asset Prefill Card */
+.prefill-card {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--primary-light); border-radius: var(--radius-sm);
+  padding: 14px 16px; border: 1px solid rgba(99,102,241,0.2);
+  margin-bottom: 20px;
+}
+.prefill-emoji { font-size: 24px; }
+.prefill-info { flex: 1; }
+.prefill-name { font-size: 14px; font-weight: 700; }
+.prefill-detail { font-size: 11px; color: var(--text-secondary); }
+.prefill-badge {
+  font-size: 10px; font-weight: 700; color: var(--primary);
+  background: white; padding: 3px 8px; border-radius: 20px;
+}
+
+/* Summary */
+.summary-card {
+  background: var(--surface); border-radius: var(--radius);
+  padding: 20px; border: 1px solid var(--border);
+}
+.summary-row {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: 10px 0; border-bottom: 1px solid var(--border-light);
+}
+.summary-row:last-child { border-bottom: none; }
+.summary-key { font-size: 13px; color: var(--text-muted); flex-shrink: 0; }
+.summary-val { font-size: 13px; font-weight: 600; text-align: right; max-width: 60%; word-break: break-word; }
+
+/* Buttons */
+.btn-row { display: flex; gap: 10px; padding: 20px; position: sticky; bottom: calc(72px + env(safe-area-inset-bottom, 0px)); background: var(--bg); }
+.btn {
+  flex: 1; padding: 18px; border-radius: var(--radius);
+  font-size: 16px; font-weight: 700; cursor: pointer;
+  font-family: inherit; border: none; transition: all var(--transition);
+  min-height: 52px;
+}
+.btn:active { transform: scale(0.98); }
+.btn-secondary { background: var(--border-light); color: var(--text-secondary); }
+.btn-primary { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; }
+.btn-primary:disabled { opacity: 0.4; pointer-events: none; }
+
+/* Success */
+.success-view { text-align: center; padding: 60px 20px; }
+.success-icon { font-size: 56px; margin-bottom: 16px; }
+.success-title { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+.success-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 8px; }
+.success-id { font-size: 12px; font-family: monospace; color: var(--text-muted); background: var(--border-light); display: inline-block; padding: 4px 12px; border-radius: 4px; margin-bottom: 24px; }
+.success-btn {
+  display: inline-block; padding: 14px 32px; border-radius: var(--radius-sm);
+  background: var(--primary); color: white; text-decoration: none;
+  font-size: 14px; font-weight: 700; transition: all var(--transition);
+}
+.success-btn:active { transform: scale(0.97); }
+
+/* Bottom Nav */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 430px;
+  background: rgba(255,255,255,0.95); backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-around;
+  padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px));
+  z-index: 100;
+}
+.nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  text-decoration: none; color: var(--text-muted);
+  font-size: 10px; font-weight: 600;
+  padding: 6px 16px;
+  min-height: 44px; min-width: 64px;
+  justify-content: center;
+}
+.nav-item.active { color: var(--primary); }
+.nav-item svg { width: 24px; height: 24px; }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-in { animation: fadeInUp 0.25s ease-out both; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="index.html">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+  </a>
+  <h1>신고 접수</h1>
+</div>
+
+<div id="progress"></div>
+<div id="app"></div>
+<div id="buttons"></div>
+
+<nav class="bottom-nav">
+  <a class="nav-item" href="index.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-8 9 8"/><path d="M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10"/></svg>
+    <span>홈</span>
+  </a>
+  <a class="nav-item active" href="report.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+    <span>신고</span>
+  </a>
+  <a class="nav-item" href="status.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
+    <span>내 현황</span>
+  </a>
+  <a class="nav-item" href="admin.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M6 20V4M18 20v-6"/></svg>
+    <span>관리</span>
+  </a>
+</nav>
+
+<script>
+const CATEGORIES = [
+  { key:'facility', name:'시설', emoji:'🏗️', subs:['누수/배관','전기/조명','도어/창문','엘리베이터','기타 시설'] },
+  { key:'environment', name:'환경', emoji:'🌡️', subs:['냉방','난방','환기','소음','악취'] },
+  { key:'it', name:'IT장비', emoji:'💻', subs:['프로젝터','복합기/프린터','PC/모니터','네트워크','전화기'] },
+  { key:'cleaning', name:'청소', emoji:'🧹', subs:['사무실 청소','화장실 청소','공용공간 청소','폐기물 처리'] },
+  { key:'parking', name:'주차', emoji:'🚗', subs:['게이트 고장','주차구획 문제','조명','기타 주차'] },
+  { key:'other', name:'기타', emoji:'📝', subs:['보안','비품 요청','기타 문의'] },
+];
+
+const ASSETS_DB = JSON.parse(localStorage.getItem('gs_assets') || '[]');
+const params = new URLSearchParams(location.search);
+
+let state = {
+  step: 1,
+  category: null,
+  subType: null,
+  location: '',
+  description: '',
+  anonymous: params.get('anon') === 'true',
+  assetType: params.get('type') || null,
+  assetId: params.get('id') || null,
+  asset: null,
+};
+
+// Pre-fill from params
+if (params.get('category')) {
+  const cat = CATEGORIES.find(c => c.key === params.get('category'));
+  if (cat) { state.category = cat; state.step = 2; }
+}
+if (state.assetType && state.assetId) {
+  state.asset = ASSETS_DB.find(a => a.id === state.assetId);
+  if (state.asset) {
+    state.location = state.asset.location || state.asset.name;
+    // Auto-set category based on asset type
+    const typeMap = { projector:'it', printer:'it', restroom:'facility', room:'facility', parking:'parking', pantry:'facility' };
+    const cat = CATEGORIES.find(c => c.key === (typeMap[state.assetType] || 'other'));
+    if (cat) state.category = cat;
+  }
+}
+
+render();
+
+function render() {
+  renderProgress();
+  if (state.step === 1) renderStep1();
+  else if (state.step === 2) renderStep2();
+  else if (state.step === 3) renderStep3();
+  else if (state.step === 4) renderStep4();
+  else if (state.step === 5) renderSuccess();
+}
+
+function renderProgress() {
+  if (state.step === 5) { document.getElementById('progress').innerHTML = ''; return; }
+  const steps = ['카테고리','상세','내용','확인'];
+  document.getElementById('progress').innerHTML = `
+    <div class="progress-bar">
+      ${steps.map((s, i) => {
+        const num = i + 1;
+        const cls = state.step > num ? 'done' : state.step === num ? 'active' : '';
+        return `<div class="prog-step ${cls}">
+          <div class="prog-dot">${state.step > num ? '✓' : num}</div>
+          <div class="prog-label">${s}</div>
+          ${i < 3 ? '<div class="prog-line"></div>' : ''}
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function renderStep1() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="step-content animate-in">
+      ${state.asset ? `
+        <div class="prefill-card">
+          <div class="prefill-emoji">${state.asset.emoji}</div>
+          <div class="prefill-info">
+            <div class="prefill-name">${state.asset.name}</div>
+            <div class="prefill-detail">${state.asset.model || state.asset.location}</div>
+          </div>
+          <div class="prefill-badge">QR 인식</div>
+        </div>
+      ` : ''}
+      <div class="step-title">어떤 종류인가요?</div>
+      <div class="step-desc">신고할 카테고리를 선택해 주세요</div>
+      <div class="option-grid">
+        ${CATEGORIES.map(c => `
+          <div class="option-card ${state.category && state.category.key === c.key ? 'selected' : ''}" onclick="selectCategory('${c.key}')">
+            <div class="emoji">${c.emoji}</div>
+            <div class="name">${c.name}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  document.getElementById('buttons').innerHTML = `
+    <div class="btn-row">
+      <button class="btn btn-primary" ${!state.category ? 'disabled' : ''} onclick="state.step=2;render()">다음</button>
+    </div>`;
+}
+
+function selectCategory(key) {
+  state.category = CATEGORIES.find(c => c.key === key);
+  state.subType = null;
+  render();
+}
+
+function renderStep2() {
+  const subs = state.category.subs;
+  document.getElementById('app').innerHTML = `
+    <div class="step-content animate-in">
+      <div class="step-title">${state.category.emoji} ${state.category.name}</div>
+      <div class="step-desc">세부 유형을 선택해 주세요</div>
+      <div class="sub-list">
+        ${subs.map(s => `
+          <div class="sub-item ${state.subType === s ? 'selected' : ''}" onclick="selectSub('${s}')">
+            <div class="sub-dot"></div>
+            <div class="sub-name">${s}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+  document.getElementById('buttons').innerHTML = `
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="state.step=1;render()">이전</button>
+      <button class="btn btn-primary" ${!state.subType ? 'disabled' : ''} onclick="state.step=3;render()">다음</button>
+    </div>`;
+}
+
+function selectSub(s) {
+  state.subType = s;
+  render();
+}
+
+function renderStep3() {
+  document.getElementById('app').innerHTML = `
+    <div class="step-content animate-in">
+      <div class="step-title">상세 내용</div>
+      <div class="step-desc">위치와 설명을 입력해 주세요</div>
+
+      <div class="anon-toggle">
+        <div class="anon-info">
+          <div class="anon-label">🔒 익명 신고</div>
+          <div class="anon-desc">신고자 정보가 관리자에게 표시되지 않습니다</div>
+        </div>
+        <div class="toggle ${state.anonymous ? 'on' : ''}" onclick="state.anonymous=!state.anonymous;render()">
+          <div class="toggle-knob"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">위치</label>
+        <input class="form-input" type="text" placeholder="예: B동 3층 회의실" value="${state.location}" oninput="state.location=this.value" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">설명</label>
+        <textarea class="form-input" placeholder="문제 상황을 자세히 설명해 주세요" oninput="state.description=this.value">${state.description}</textarea>
+      </div>
+    </div>`;
+  const canNext = state.location.trim() && state.description.trim();
+  document.getElementById('buttons').innerHTML = `
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="state.step=2;render()">이전</button>
+      <button class="btn btn-primary" ${!canNext ? 'disabled' : ''} onclick="state.step=4;render()">다음</button>
+    </div>`;
+}
+
+function renderStep4() {
+  document.getElementById('app').innerHTML = `
+    <div class="step-content animate-in">
+      <div class="step-title">신고 내용 확인</div>
+      <div class="step-desc">아래 내용이 맞는지 확인해 주세요</div>
+      <div class="summary-card">
+        <div class="summary-row"><span class="summary-key">카테고리</span><span class="summary-val">${state.category.emoji} ${state.category.name}</span></div>
+        <div class="summary-row"><span class="summary-key">유형</span><span class="summary-val">${state.subType}</span></div>
+        ${state.asset ? `<div class="summary-row"><span class="summary-key">자산</span><span class="summary-val">${state.asset.name}</span></div>` : ''}
+        <div class="summary-row"><span class="summary-key">위치</span><span class="summary-val">${state.location}</span></div>
+        <div class="summary-row"><span class="summary-key">설명</span><span class="summary-val">${state.description}</span></div>
+        <div class="summary-row"><span class="summary-key">익명</span><span class="summary-val">${state.anonymous ? '예' : '아니오'}</span></div>
+      </div>
+    </div>`;
+  document.getElementById('buttons').innerHTML = `
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="state.step=3;render()">수정</button>
+      <button class="btn btn-primary" onclick="submitReport()">접수하기</button>
+    </div>`;
+}
+
+function submitReport() {
+  const reports = JSON.parse(localStorage.getItem('gs_reports') || '[]');
+  const id = 'RPT-' + String(reports.length + 1).padStart(3, '0');
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0];
+  const timeStr = now.toTimeString().slice(0,5);
+
+  const report = {
+    id,
+    title: `${state.subType} — ${state.location}`,
+    category: state.category.name,
+    location: state.location,
+    status: '접수',
+    date: dateStr,
+    assetId: state.asset ? state.asset.id : '',
+    description: state.description,
+    anonymous: state.anonymous,
+    timeline: [{ date: `${dateStr} ${timeStr}`, action: '접수', note: state.anonymous ? '익명 신고 접수됨' : '신고 접수됨' }],
+  };
+
+  reports.unshift(report);
+  localStorage.setItem('gs_reports', JSON.stringify(reports));
+
+  state.reportId = id;
+  state.step = 5;
+  render();
+}
+
+function renderSuccess() {
+  document.getElementById('app').innerHTML = `
+    <div class="success-view animate-in">
+      <div class="success-icon">✅</div>
+      <div class="success-title">접수 완료!</div>
+      <div class="success-desc">신고가 정상적으로 접수되었습니다.<br>처리 상태는 "내 현황"에서 확인할 수 있습니다.</div>
+      <div class="success-id">${state.reportId}</div><br><br>
+      <a class="success-btn" href="status.html">내 현황 보기</a>
+    </div>`;
+  document.getElementById('buttons').innerHTML = '';
+}
+</script>
+</body>
+</html>
