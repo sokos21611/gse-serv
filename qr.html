@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>QR 코드 관리 — 총무 서비스</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<style>
+:root {
+  --primary: #6366f1; --primary-dark: #4f46e5; --primary-light: #eef2ff;
+  --accent: #8b5cf6; --accent-light: #f5f3ff;
+  --bg: #fafafa; --surface: #ffffff;
+  --text: #1e293b; --text-secondary: #64748b; --text-muted: #94a3b8;
+  --border: #e2e8f0; --border-light: #f1f5f9;
+  --success: #10b981; --success-bg: #ecfdf5;
+  --radius: 16px; --radius-sm: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body {
+  font-family: -apple-system, 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; max-width: 430px; margin: 0 auto;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Header */
+.header {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: white; padding: calc(16px + env(safe-area-inset-top, 0px)) 20px 20px;
+}
+.header h1 { font-size: 20px; font-weight: 800; }
+.header p { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+
+.section { padding: 20px; }
+.section-title { font-size: 16px; font-weight: 800; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.section-title .num {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--primary); color: white;
+  font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Asset Cards */
+.asset-card {
+  background: var(--surface); border-radius: var(--radius);
+  padding: 16px; margin-bottom: 12px;
+  border: 1px solid var(--border); box-shadow: var(--shadow);
+}
+.asset-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.asset-emoji { font-size: 28px; }
+.asset-info { flex: 1; }
+.asset-name { font-size: 15px; font-weight: 700; }
+.asset-detail { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.asset-badge {
+  font-size: 10px; font-weight: 700; color: var(--primary);
+  background: var(--primary-light); padding: 4px 10px; border-radius: 20px;
+}
+
+.qr-area {
+  display: flex; align-items: center; gap: 16px;
+  background: var(--border-light); border-radius: var(--radius-sm);
+  padding: 16px; margin-top: 12px;
+}
+.qr-img { flex-shrink: 0; }
+.qr-img canvas, .qr-img img { border-radius: 8px; }
+.qr-actions { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.qr-url {
+  font-size: 10px; color: var(--text-muted); word-break: break-all;
+  background: white; padding: 8px; border-radius: 6px; line-height: 1.4;
+}
+.qr-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 14px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  border: none; font-family: inherit; transition: all var(--transition);
+}
+.qr-btn:active { transform: scale(0.97); }
+.qr-btn-primary { background: var(--primary); color: white; }
+.qr-btn-secondary { background: white; color: var(--text); border: 1px solid var(--border); }
+.qr-btn-row { display: flex; gap: 8px; }
+
+/* Add Form */
+.add-form {
+  background: var(--surface); border-radius: var(--radius);
+  padding: 20px; border: 2px dashed var(--border);
+}
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 13px; font-weight: 700; margin-bottom: 6px; display: block; }
+.form-input {
+  width: 100%; padding: 12px 14px; border-radius: var(--radius-sm);
+  border: 2px solid var(--border); font-size: 15px;
+  font-family: inherit; background: var(--bg); color: var(--text);
+  -webkit-appearance: none;
+}
+.form-input:focus { outline: none; border-color: var(--primary); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+select.form-input { cursor: pointer; }
+.add-btn {
+  width: 100%; padding: 14px; border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: white; font-size: 15px; font-weight: 700; cursor: pointer;
+  border: none; font-family: inherit; margin-top: 4px;
+}
+.add-btn:active { transform: scale(0.98); }
+.add-btn:disabled { opacity: 0.4; pointer-events: none; }
+
+.toast {
+  position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+  background: #1e293b; color: white; padding: 12px 24px; border-radius: 30px;
+  font-size: 14px; font-weight: 600; z-index: 999;
+  animation: toastIn 0.3s ease-out, toastOut 0.3s ease-in 1.7s forwards;
+}
+@keyframes toastIn { from { opacity:0; transform: translateX(-50%) translateY(20px); } }
+@keyframes toastOut { to { opacity:0; transform: translateX(-50%) translateY(-10px); } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📱 QR 코드 관리</h1>
+  <p>자산별 QR 생성 · 스캔하면 신고 폼 자동 연결</p>
+</div>
+
+<div class="section">
+  <div class="section-title"><span class="num">1</span> 등록된 QR 코드</div>
+  <div id="asset-list"></div>
+</div>
+
+<div class="section">
+  <div class="section-title"><span class="num">2</span> 새 QR 코드 추가</div>
+  <div class="add-form">
+    <div class="form-group">
+      <label class="form-label">자산명 *</label>
+      <input class="form-input" id="f-name" type="text" placeholder="예: 전자동 커피머신A">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">모델명</label>
+        <input class="form-input" id="f-model" type="text" placeholder="선택 입력">
+      </div>
+      <div class="form-group">
+        <label class="form-label">카테고리</label>
+        <select class="form-input" id="f-cat">
+          <option value="">선택</option>
+          <option value="facility">시설</option>
+          <option value="environment">환경</option>
+          <option value="it">IT장비</option>
+          <option value="cleaning">청소</option>
+          <option value="parking">주차</option>
+          <option value="other">기타/비품</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">위치 *</label>
+      <input class="form-input" id="f-loc" type="text" placeholder="예: 37층 타운홀">
+    </div>
+    <div class="form-group">
+      <label class="form-label">이모지</label>
+      <input class="form-input" id="f-emoji" type="text" placeholder="☕ (기본: 📎)" style="width:80px;">
+    </div>
+    <button class="add-btn" id="add-btn" onclick="addAsset()">QR 코드 생성</button>
+  </div>
+</div>
+
+<script>
+const BASE_URL = location.origin;
+const STORAGE_KEY = 'gs_qr_assets';
+const CAT_LABELS = { facility:'시설', environment:'환경', it:'IT장비', cleaning:'청소', parking:'주차', other:'기타/비품' };
+
+// Default assets
+const DEFAULT_ASSETS = [
+  { id:'QR001', name:'전자동 커피머신A', model:'Jura GIGA X8c', location:'37층 타운홀', category:'other', emoji:'☕' },
+  { id:'QR002', name:'38층 남자 화장실', model:'', location:'38층 남자 화장실', category:'facility', emoji:'🚻' },
+];
+
+function getAssets() {
+  let assets = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+  if (!assets) {
+    assets = DEFAULT_ASSETS;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(assets));
+  }
+  return assets;
+}
+
+function buildQRUrl(asset) {
+  const p = new URLSearchParams();
+  p.set('qr', '1');
+  p.set('name', asset.name);
+  if (asset.model) p.set('model', asset.model);
+  p.set('loc', asset.location);
+  if (asset.category) p.set('cat', asset.category);
+  if (asset.emoji) p.set('emoji', asset.emoji);
+  if (asset.id) p.set('aid', asset.id);
+  return BASE_URL + '/report.html?' + p.toString();
+}
+
+function renderAssets() {
+  const assets = getAssets();
+  const list = document.getElementById('asset-list');
+
+  if (assets.length === 0) {
+    list.innerHTML = '<p style="color:var(--text-muted);font-size:14px;text-align:center;padding:30px 0;">등록된 QR 코드가 없습니다</p>';
+    return;
+  }
+
+  list.innerHTML = assets.map((a, i) => {
+    const url = buildQRUrl(a);
+    return `
+      <div class="asset-card">
+        <div class="asset-top">
+          <div class="asset-emoji">${a.emoji || '📎'}</div>
+          <div class="asset-info">
+            <div class="asset-name">${a.name}</div>
+            <div class="asset-detail">${[a.model, a.location].filter(Boolean).join(' · ')}</div>
+          </div>
+          <div class="asset-badge">${CAT_LABELS[a.category] || '기타'}</div>
+        </div>
+        <div class="qr-area">
+          <div class="qr-img" id="qr-${i}"></div>
+          <div class="qr-actions">
+            <div class="qr-url">${url}</div>
+            <div class="qr-btn-row">
+              <button class="qr-btn qr-btn-secondary" onclick="copyUrl('${encodeURIComponent(url)}')">📋 복사</button>
+              <button class="qr-btn qr-btn-primary" onclick="downloadQR(${i}, '${a.name}')">💾 저장</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Generate QR codes
+  assets.forEach((a, i) => {
+    const url = buildQRUrl(a);
+    const qr = qrcode(0, 'M');
+    qr.addData(url);
+    qr.make();
+    const el = document.getElementById('qr-' + i);
+    if (el) el.innerHTML = qr.createSvgTag({ cellSize: 3, margin: 2, scalable: true });
+  });
+}
+
+function copyUrl(encodedUrl) {
+  const url = decodeURIComponent(encodedUrl);
+  navigator.clipboard.writeText(url).then(() => showToast('URL 복사됨!'));
+}
+
+function downloadQR(index, name) {
+  const assets = getAssets();
+  const url = buildQRUrl(assets[index]);
+  const qr = qrcode(0, 'M');
+  qr.addData(url);
+  qr.make();
+
+  const size = 400;
+  const canvas = document.createElement('canvas');
+  canvas.width = size + 80;
+  canvas.height = size + 120;
+  const ctx = canvas.getContext('2d');
+
+  // Background
+  ctx.fillStyle = '#ffffff';
+  ctx.roundRect(0, 0, canvas.width, canvas.height, 16);
+  ctx.fill();
+
+  // QR code
+  const modules = qr.getModuleCount();
+  const cellSize = Math.floor(size / modules);
+  const offset = Math.floor((canvas.width - cellSize * modules) / 2);
+  ctx.fillStyle = '#1e293b';
+  for (let r = 0; r < modules; r++) {
+    for (let c = 0; c < modules; c++) {
+      if (qr.isDark(r, c)) {
+        ctx.fillRect(offset + c * cellSize, 30 + r * cellSize, cellSize, cellSize);
+      }
+    }
+  }
+
+  // Label
+  ctx.fillStyle = '#1e293b';
+  ctx.font = 'bold 16px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(name, canvas.width / 2, size + 60);
+  ctx.font = '11px -apple-system, sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('총무 서비스 불편신고', canvas.width / 2, size + 80);
+
+  // Download
+  const link = document.createElement('a');
+  link.download = `QR_${name}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  showToast('QR 이미지 저장됨!');
+}
+
+function addAsset() {
+  const name = document.getElementById('f-name').value.trim();
+  const model = document.getElementById('f-model').value.trim();
+  const loc = document.getElementById('f-loc').value.trim();
+  const cat = document.getElementById('f-cat').value;
+  const emoji = document.getElementById('f-emoji').value.trim() || '📎';
+
+  if (!name || !loc) { showToast('자산명과 위치는 필수입니다'); return; }
+
+  const assets = getAssets();
+  const id = 'QR' + String(assets.length + 1).padStart(3, '0');
+  assets.push({ id, name, model, location: loc, category: cat || 'other', emoji });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(assets));
+
+  // Clear form
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-model').value = '';
+  document.getElementById('f-loc').value = '';
+  document.getElementById('f-cat').value = '';
+  document.getElementById('f-emoji').value = '';
+
+  renderAssets();
+  showToast('QR 코드가 생성되었습니다!');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showToast(msg) {
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2200);
+}
+
+renderAssets();
+</script>
+</body>
+</html>

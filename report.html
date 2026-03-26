@@ -283,16 +283,32 @@ let state = {
   asset: null,
 };
 
-// Pre-fill from params
-if (params.get('category')) {
+// QR direct params: ?qr=1&name=자산명&model=모델명&loc=위치&cat=카테고리키
+if (params.get('qr')) {
+  state.asset = {
+    name: params.get('name') || '',
+    model: params.get('model') || '',
+    location: params.get('loc') || '',
+    emoji: params.get('emoji') || '📎',
+    id: params.get('aid') || '',
+  };
+  state.location = state.asset.location || state.asset.name;
+  const catKey = params.get('cat');
+  if (catKey) {
+    const cat = CATEGORIES.find(c => c.key === catKey);
+    if (cat) state.category = cat;
+  }
+}
+
+// Pre-fill from params (legacy)
+if (!params.get('qr') && params.get('category')) {
   const cat = CATEGORIES.find(c => c.key === params.get('category'));
   if (cat) { state.category = cat; state.step = 2; }
 }
-if (state.assetType && state.assetId) {
+if (!params.get('qr') && state.assetType && state.assetId) {
   state.asset = ASSETS_DB.find(a => a.id === state.assetId);
   if (state.asset) {
     state.location = state.asset.location || state.asset.name;
-    // Auto-set category based on asset type
     const typeMap = { projector:'it', printer:'it', restroom:'facility', room:'facility', parking:'parking', pantry:'facility' };
     const cat = CATEGORIES.find(c => c.key === (typeMap[state.assetType] || 'other'));
     if (cat) state.category = cat;
