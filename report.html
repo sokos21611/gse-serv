@@ -158,6 +158,18 @@ textarea.form-input { min-height: 120px; resize: vertical; }
   background: white; padding: 3px 8px; border-radius: 20px;
 }
 
+/* QR Asset Hero Card */
+.qr-hero {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: white; padding: 24px 20px; text-align: center;
+  margin: -1px -0px 0; /* flush with top bar */
+}
+.qr-hero-emoji { font-size: 48px; margin-bottom: 8px; }
+.qr-hero-name { font-size: 20px; font-weight: 800; }
+.qr-hero-detail { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+.qr-hero-loc { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; opacity: 0.75; margin-top: 8px; background: rgba(255,255,255,0.15); padding: 4px 12px; border-radius: 20px; }
+.qr-hero-divider { font-size: 14px; font-weight: 700; color: var(--text); padding: 16px 20px 8px; }
+
 /* Summary */
 .summary-card {
   background: var(--surface); border-radius: var(--radius);
@@ -235,6 +247,7 @@ textarea.form-input { min-height: 120px; resize: vertical; }
   <h1>신고 접수</h1>
 </div>
 
+<div id="qr-hero-area"></div>
 <div id="progress"></div>
 <div id="app"></div>
 <div id="buttons"></div>
@@ -293,10 +306,14 @@ if (params.get('qr')) {
     id: params.get('aid') || '',
   };
   state.location = state.asset.location || state.asset.name;
+  state.isQR = true; // QR 스캔 여부 플래그
   const catKey = params.get('cat');
   if (catKey) {
     const cat = CATEGORIES.find(c => c.key === catKey);
-    if (cat) state.category = cat;
+    if (cat) {
+      state.category = cat;
+      state.step = 2; // 카테고리 자동 선택 → step2 바로 진입
+    }
   }
 }
 
@@ -318,12 +335,30 @@ if (!params.get('qr') && state.assetType && state.assetId) {
 render();
 
 function render() {
+  renderQRHero();
   renderProgress();
   if (state.step === 1) renderStep1();
   else if (state.step === 2) renderStep2();
   else if (state.step === 3) renderStep3();
   else if (state.step === 4) renderStep4();
   else if (state.step === 5) renderSuccess();
+}
+
+function renderQRHero() {
+  const area = document.getElementById('qr-hero-area');
+  if (!state.isQR || !state.asset || state.step === 5) {
+    area.innerHTML = '';
+    return;
+  }
+  area.innerHTML = `
+    <div class="qr-hero">
+      <div class="qr-hero-emoji">${state.asset.emoji}</div>
+      <div class="qr-hero-name">${state.asset.name}</div>
+      ${state.asset.model ? `<div class="qr-hero-detail">${state.asset.model}</div>` : ''}
+      <div class="qr-hero-loc">📍 ${state.asset.location}</div>
+    </div>
+    <div class="qr-hero-divider">이 자산에 대해 신고합니다</div>
+  `;
 }
 
 function renderProgress() {
@@ -383,10 +418,16 @@ function selectCategory(key) {
 
 function renderStep2() {
   const subs = state.category.subs;
+  const isQRStart = state.isQR && state.category;
   document.getElementById('app').innerHTML = `
     <div class="step-content animate-in">
-      <div class="step-title">${state.category.emoji} ${state.category.name}</div>
-      <div class="step-desc">세부 유형을 선택해 주세요</div>
+      ${isQRStart ? `
+        <div class="step-title">어떤 문제인가요?</div>
+        <div class="step-desc">${state.category.emoji} ${state.category.name} 카테고리 · <a href="#" onclick="state.step=1;render();return false" style="color:var(--primary);text-decoration:underline;">변경</a></div>
+      ` : `
+        <div class="step-title">${state.category.emoji} ${state.category.name}</div>
+        <div class="step-desc">세부 유형을 선택해 주세요</div>
+      `}
       <div class="sub-list">
         ${subs.map(s => `
           <div class="sub-item ${state.subType === s ? 'selected' : ''}" onclick="selectSub('${s}')">
@@ -398,7 +439,7 @@ function renderStep2() {
     </div>`;
   document.getElementById('buttons').innerHTML = `
     <div class="btn-row">
-      <button class="btn btn-secondary" onclick="state.step=1;render()">이전</button>
+      ${isQRStart ? '' : '<button class="btn btn-secondary" onclick="state.step=1;render()">이전</button>'}
       <button class="btn btn-primary" ${!state.subType ? 'disabled' : ''} onclick="state.step=3;render()">다음</button>
     </div>`;
 }
