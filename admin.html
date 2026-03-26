@@ -161,6 +161,112 @@ body {
 
 .section-empty { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 14px; }
 
+/* Asset Action Buttons */
+.asset-actions {
+  display: flex; gap: 8px; padding: 16px 20px 8px;
+}
+.asset-actions .action-btn {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 12px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 700; text-decoration: none;
+  box-shadow: var(--shadow-md); cursor: pointer; border: none;
+  font-family: inherit; transition: all var(--transition);
+}
+.action-btn.qr { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; }
+.action-btn.add { background: var(--surface); color: var(--primary); border: 1.5px solid var(--primary); }
+.action-btn.excel { background: var(--surface); color: #217346; border: 1.5px solid #217346; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  z-index: 200; display: none; align-items: flex-end; justify-content: center;
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--surface); border-radius: 20px 20px 0 0;
+  width: 100%; max-width: 430px; max-height: 90vh;
+  overflow-y: auto; padding: 24px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+  animation: slideUp 0.3s ease-out;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px;
+}
+.modal-header h2 { font-size: 18px; font-weight: 800; }
+.modal-close {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--border-light); border: none;
+  font-size: 18px; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; color: var(--text-secondary);
+}
+.form-group { margin-bottom: 14px; }
+.form-group label {
+  display: block; font-size: 12px; font-weight: 700;
+  color: var(--text-secondary); margin-bottom: 6px;
+}
+.form-group label .required { color: var(--danger); }
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%; padding: 12px 14px; border-radius: var(--radius-xs);
+  border: 1.5px solid var(--border); font-size: 14px;
+  font-family: inherit; background: var(--bg);
+  transition: border-color var(--transition);
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  outline: none; border-color: var(--primary); background: white;
+}
+.form-group textarea { resize: vertical; min-height: 60px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-submit {
+  width: 100%; padding: 14px; border: none; border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: white; font-size: 15px; font-weight: 700;
+  cursor: pointer; font-family: inherit; margin-top: 8px;
+  transition: opacity var(--transition);
+}
+.form-submit:active { opacity: 0.8; }
+
+/* Excel Upload Area */
+.excel-upload-area {
+  border: 2px dashed var(--border); border-radius: var(--radius-sm);
+  padding: 30px 20px; text-align: center; cursor: pointer;
+  transition: all var(--transition); margin-bottom: 16px;
+}
+.excel-upload-area:hover, .excel-upload-area.dragover {
+  border-color: #217346; background: #f0fdf4;
+}
+.excel-upload-area .upload-icon { font-size: 36px; margin-bottom: 8px; }
+.excel-upload-area .upload-text { font-size: 14px; font-weight: 600; color: var(--text-secondary); }
+.excel-upload-area .upload-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.excel-preview { margin: 16px 0; }
+.excel-preview table {
+  width: 100%; border-collapse: collapse; font-size: 11px;
+}
+.excel-preview th {
+  background: var(--primary-light); color: var(--primary);
+  padding: 8px 6px; font-weight: 700; text-align: left;
+  border: 1px solid var(--border);
+}
+.excel-preview td {
+  padding: 6px; border: 1px solid var(--border); color: var(--text-secondary);
+}
+.excel-preview tr:nth-child(even) td { background: var(--border-light); }
+.template-download {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: #217346; font-size: 13px; font-weight: 600;
+  cursor: pointer; text-decoration: underline;
+  margin-bottom: 16px;
+}
+.excel-count {
+  font-size: 14px; font-weight: 700; color: var(--success);
+  padding: 12px; background: var(--success-bg);
+  border-radius: var(--radius-xs); margin-bottom: 12px; text-align: center;
+}
+
 /* Bottom Nav */
 .bottom-nav {
   position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
@@ -212,6 +318,83 @@ body {
 <div id="content"></div>
 <div class="toast" id="toast"></div>
 
+<!-- 개별 등록 모달 -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>➕ 자산 등록</h2>
+      <button class="modal-close" onclick="closeModal('addModal')">✕</button>
+    </div>
+    <form onsubmit="submitAsset(event)">
+      <div class="form-group">
+        <label>자산명 <span class="required">*</span></label>
+        <input type="text" id="f_name" placeholder="예: 전자동 커피머신A" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>모델명</label>
+          <input type="text" id="f_model" placeholder="예: Jura GIGA X8c">
+        </div>
+        <div class="form-group">
+          <label>카테고리 <span class="required">*</span></label>
+          <select id="f_category" required>
+            <option value="">선택</option>
+            <option value="시설">시설</option>
+            <option value="환경">환경</option>
+            <option value="IT장비">IT장비</option>
+            <option value="비품">비품</option>
+            <option value="청소">청소</option>
+            <option value="주차">주차</option>
+            <option value="기타">기타</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>위치 <span class="required">*</span></label>
+        <input type="text" id="f_location" placeholder="예: 37층 타운홀" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>설치일</label>
+          <input type="month" id="f_installed">
+        </div>
+        <div class="form-group">
+          <label>관리번호</label>
+          <input type="text" id="f_assetId" placeholder="자동생성">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>담당자</label>
+        <input type="text" id="f_manager" placeholder="예: 홍길동">
+      </div>
+      <div class="form-group">
+        <label>메모</label>
+        <textarea id="f_memo" placeholder="특이사항 기입"></textarea>
+      </div>
+      <button type="submit" class="form-submit">등록하기</button>
+    </form>
+  </div>
+</div>
+
+<!-- 엑셀 업로드 모달 -->
+<div class="modal-overlay" id="excelModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>📊 엑셀 일괄 등록</h2>
+      <button class="modal-close" onclick="closeModal('excelModal')">✕</button>
+    </div>
+    <div class="template-download" onclick="downloadTemplate()">📥 샘플 템플릿 다운로드 (.xlsx)</div>
+    <div class="excel-upload-area" id="dropZone" onclick="document.getElementById('excelFile').click()">
+      <div class="upload-icon">📂</div>
+      <div class="upload-text">.xlsx 파일을 여기에 끌어다 놓거나 클릭하세요</div>
+      <div class="upload-hint">컬럼: 자산명, 모델명, 위치, 카테고리, 설치일, 관리번호, 담당자, 메모</div>
+    </div>
+    <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleExcelFile(this)">
+    <div id="excelPreview"></div>
+    <button class="form-submit" id="excelSubmitBtn" style="display:none" onclick="submitExcelAssets()">일괄 등록하기</button>
+  </div>
+</div>
+
 <nav class="bottom-nav">
   <a class="nav-item" href="index.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-8 9 8"/><path d="M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10"/></svg>
@@ -231,8 +414,10 @@ body {
   </a>
 </nav>
 
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script>
 let activeTab = 'reports';
+let pendingExcelAssets = [];
 const TAB_LIST = [
   { key:'reports', label:'접수현황' },
   { key:'assets', label:'자산관리' },
@@ -349,24 +534,25 @@ function changeStatus(id, newStatus) {
 function renderAssets() {
   const assets = getAssets();
   document.getElementById('content').innerHTML = `
-    <div style="padding:16px 20px 8px;">
-      <a href="qr.html" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--primary),var(--accent));color:white;text-decoration:none;font-size:14px;font-weight:700;box-shadow:var(--shadow-md);">
-        📱 QR 코드 관리
-      </a>
+    <div class="asset-actions">
+      <a href="qr.html" class="action-btn qr">📱 QR관리</a>
+      <button class="action-btn add" onclick="openModal('addModal')">➕ 등록</button>
+      <button class="action-btn excel" onclick="openModal('excelModal')">📊 엑셀</button>
     </div>
     <div class="asset-list" style="padding-top:8px;">
       ${assets.map((a, i) => {
-        const dotClass = a.reports >= 4 ? 'dot-bad' : a.reports >= 2 ? 'dot-warn' : 'dot-good';
+        const dotClass = (a.reports||0) >= 4 ? 'dot-bad' : (a.reports||0) >= 2 ? 'dot-warn' : 'dot-good';
         return `
           <div class="asset-card animate-in" style="animation-delay:${i * 0.04}s">
-            <div class="asset-emoji">${a.emoji}</div>
+            <div class="asset-emoji">${a.emoji || '📦'}</div>
             <div class="asset-info">
               <div class="asset-name">${a.name}</div>
-              <div class="asset-detail">${a.model || a.location} ${a.installed ? '· 설치 ' + a.installed : ''} · 신고 ${a.reports}건</div>
+              <div class="asset-detail">${[a.model, a.location, a.installed ? '설치 '+a.installed : '', a.manager].filter(Boolean).join(' · ')}${a.reports ? ' · 신고 '+a.reports+'건' : ''}</div>
             </div>
-            <div class="asset-status-dot ${dotClass}" title="${a.reports}건 신고"></div>
+            <div class="asset-status-dot ${dotClass}" title="${a.reports||0}건 신고"></div>
           </div>`;
       }).join('')}
+      ${assets.length === 0 ? '<div class="section-empty">등록된 자산이 없습니다</div>' : ''}
     </div>`;
 }
 
@@ -414,6 +600,136 @@ function renderSchedule() {
 
   document.getElementById('content').innerHTML = html;
 }
+
+// ─── Modal ───
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+  if (id === 'excelModal') { pendingExcelAssets = []; document.getElementById('excelPreview').innerHTML = ''; document.getElementById('excelSubmitBtn').style.display = 'none'; }
+}
+
+// ─── Category → Emoji mapping ───
+const CATEGORY_EMOJI = {
+  '시설':'🏢', '환경':'🌡️', 'IT장비':'💻', '비품':'☕',
+  '청소':'🧹', '주차':'🅿️', '기타':'📦'
+};
+
+// ─── Generate next asset ID ───
+function nextAssetId() {
+  const assets = getAssets();
+  const nums = assets.map(a => parseInt((a.id||'').replace(/\D/g,'')) || 0);
+  return 'A' + String(Math.max(0, ...nums) + 1).padStart(3, '0');
+}
+
+// ─── Individual Registration ───
+function submitAsset(e) {
+  e.preventDefault();
+  const assets = getAssets();
+  const newAsset = {
+    id: document.getElementById('f_assetId').value || nextAssetId(),
+    name: document.getElementById('f_name').value.trim(),
+    model: document.getElementById('f_model').value.trim(),
+    location: document.getElementById('f_location').value.trim(),
+    category: document.getElementById('f_category').value,
+    installed: document.getElementById('f_installed').value.replace('-', '.'),
+    manager: document.getElementById('f_manager').value.trim(),
+    memo: document.getElementById('f_memo').value.trim(),
+    emoji: CATEGORY_EMOJI[document.getElementById('f_category').value] || '📦',
+    reports: 0,
+    createdAt: new Date().toISOString()
+  };
+  assets.push(newAsset);
+  localStorage.setItem('gs_assets', JSON.stringify(assets));
+  localStorage.setItem('gs_assets_v', '3');
+  closeModal('addModal');
+  e.target.reset();
+  showToast(`✅ "${newAsset.name}" 등록 완료`);
+  render();
+}
+
+// ─── Excel Upload ───
+function handleExcelFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws);
+      if (rows.length === 0) { showToast('⚠️ 데이터가 없습니다'); return; }
+      pendingExcelAssets = rows.map(r => ({
+        id: r['관리번호'] || '',
+        name: r['자산명'] || '',
+        model: r['모델명'] || '',
+        location: r['위치'] || '',
+        category: r['카테고리'] || '기타',
+        installed: String(r['설치일'] || '').replace('-', '.'),
+        manager: r['담당자'] || '',
+        memo: r['메모'] || '',
+        emoji: CATEGORY_EMOJI[r['카테고리']] || '📦',
+        reports: 0,
+        createdAt: new Date().toISOString()
+      }));
+      renderExcelPreview();
+    } catch(err) { showToast('⚠️ 파일 읽기 실패: ' + err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+  input.value = '';
+}
+
+function renderExcelPreview() {
+  const cols = ['자산명','모델명','위치','카테고리','설치일','관리번호','담당자','메모'];
+  let html = `<div class="excel-count">📋 ${pendingExcelAssets.length}건 감지됨</div>`;
+  html += '<div class="excel-preview"><table><tr>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr>';
+  pendingExcelAssets.slice(0, 10).forEach(a => {
+    html += '<tr>' + [a.name, a.model, a.location, a.category, a.installed, a.id, a.manager, a.memo].map(v => `<td>${v||''}</td>`).join('') + '</tr>';
+  });
+  if (pendingExcelAssets.length > 10) html += `<tr><td colspan="${cols.length}" style="text-align:center;color:var(--text-muted)">... 외 ${pendingExcelAssets.length - 10}건</td></tr>`;
+  html += '</table></div>';
+  document.getElementById('excelPreview').innerHTML = html;
+  document.getElementById('excelSubmitBtn').style.display = 'block';
+}
+
+function submitExcelAssets() {
+  if (pendingExcelAssets.length === 0) return;
+  const assets = getAssets();
+  let nextNum = Math.max(0, ...assets.map(a => parseInt((a.id||'').replace(/\D/g,'')) || 0));
+  pendingExcelAssets.forEach(a => {
+    if (!a.id) { nextNum++; a.id = 'A' + String(nextNum).padStart(3, '0'); }
+    assets.push(a);
+  });
+  localStorage.setItem('gs_assets', JSON.stringify(assets));
+  localStorage.setItem('gs_assets_v', '3');
+  showToast(`✅ ${pendingExcelAssets.length}건 일괄 등록 완료`);
+  closeModal('excelModal');
+  render();
+}
+
+// ─── Excel Template Download ───
+function downloadTemplate() {
+  const template = [
+    { '자산명':'전자동 커피머신B', '모델명':'Jura GIGA X8c', '위치':'38층 라운지', '카테고리':'비품', '설치일':'2025.06', '관리번호':'', '담당자':'김총무', '메모':'2층 이전 예정' },
+    { '자산명':'42층 남자 화장실', '모델명':'', '위치':'42층', '카테고리':'시설', '설치일':'', '관리번호':'', '담당자':'', '메모':'' },
+  ];
+  const ws = XLSX.utils.json_to_sheet(template);
+  ws['!cols'] = [{ wch:20 },{ wch:18 },{ wch:15 },{ wch:10 },{ wch:10 },{ wch:12 },{ wch:10 },{ wch:20 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '자산목록');
+  XLSX.writeFile(wb, '자산등록_템플릿.xlsx');
+}
+
+// ─── Drag & Drop ───
+document.addEventListener('DOMContentLoaded', () => {
+  const dz = document.getElementById('dropZone');
+  if (!dz) return;
+  ['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('dragover'); }));
+  ['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('dragover'); }));
+  dz.addEventListener('drop', e => {
+    const file = e.dataTransfer.files[0];
+    if (file) { const dt = new DataTransfer(); dt.items.add(file); document.getElementById('excelFile').files = dt.files; handleExcelFile(document.getElementById('excelFile')); }
+  });
+});
 
 render();
 </script>
