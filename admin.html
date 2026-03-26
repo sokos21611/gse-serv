@@ -267,13 +267,12 @@ const DEFAULT_ASSETS = [
   { id:'A008', name:'38층 남자 화장실', model:'', location:'38층 남자 화장실', installed:'', reports:0, emoji:'🚻' },
 ];
 function getAssets() {
-  let assets = JSON.parse(localStorage.getItem('gs_assets') || '[]');
-  const existingNames = new Set(assets.map(a => a.name));
-  DEFAULT_ASSETS.forEach(da => {
-    if (!existingNames.has(da.name)) assets.push(da);
-  });
-  localStorage.setItem('gs_assets', JSON.stringify(assets));
-  return assets;
+  // v2: reset old data to fix duplicates
+  if (localStorage.getItem('gs_assets_v') !== '2') {
+    localStorage.setItem('gs_assets', JSON.stringify(DEFAULT_ASSETS));
+    localStorage.setItem('gs_assets_v', '2');
+  }
+  return JSON.parse(localStorage.getItem('gs_assets') || '[]');
 }
 
 function showToast(msg) {
