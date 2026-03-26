@@ -267,11 +267,13 @@ const DEFAULT_ASSETS = [
   { id:'A008', name:'38층 남자 화장실', model:'', location:'38층 남자 화장실', installed:'', reports:0, emoji:'🚻' },
 ];
 function getAssets() {
-  let assets = JSON.parse(localStorage.getItem('gs_assets') || 'null');
-  if (!assets || assets.length === 0) {
-    assets = DEFAULT_ASSETS;
-    localStorage.setItem('gs_assets', JSON.stringify(assets));
-  }
+  let assets = JSON.parse(localStorage.getItem('gs_assets') || '[]');
+  // Merge: ensure all DEFAULT_ASSETS exist by id
+  const existingIds = new Set(assets.map(a => a.id));
+  DEFAULT_ASSETS.forEach(da => {
+    if (!existingIds.has(da.id)) assets.push(da);
+  });
+  localStorage.setItem('gs_assets', JSON.stringify(assets));
   return assets;
 }
 
