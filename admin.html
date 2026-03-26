@@ -256,7 +256,24 @@ const HISTORY_DATA = [
 ];
 
 function getReports() { return JSON.parse(localStorage.getItem('gs_reports') || '[]'); }
-function getAssets() { return JSON.parse(localStorage.getItem('gs_assets') || '[]'); }
+const DEFAULT_ASSETS = [
+  { id:'A001', name:'B동 3층 회의실 프로젝터', model:'Epson EB-2265U', location:'B동 3층 회의실', installed:'2023.06', reports:4, emoji:'📽️' },
+  { id:'A002', name:'B동 4층 복합기', model:'HP LaserJet M634', location:'B동 4층', installed:'2024.01', reports:2, emoji:'🖨️' },
+  { id:'A003', name:'A동 2층 남자화장실', model:'', location:'A동 2층', installed:'', reports:3, emoji:'🚻' },
+  { id:'A004', name:'B동 3층 회의실 2', model:'10인실', location:'B동 3층', installed:'2022.03', reports:5, emoji:'🏢' },
+  { id:'A005', name:'주차장 1층 게이트', model:'ParkPlus G300', location:'주차장 1층', installed:'2023.09', reports:1, emoji:'🅿️' },
+  { id:'A006', name:'A동 5층 탕비실', model:'', location:'A동 5층', installed:'', reports:1, emoji:'☕' },
+  { id:'A007', name:'전자동 커피머신A', model:'Jura GIGA X8c', location:'37층 타운홀', installed:'', reports:0, emoji:'☕' },
+  { id:'A008', name:'38층 남자 화장실', model:'', location:'38층 남자 화장실', installed:'', reports:0, emoji:'🚻' },
+];
+function getAssets() {
+  let assets = JSON.parse(localStorage.getItem('gs_assets') || 'null');
+  if (!assets || assets.length === 0) {
+    assets = DEFAULT_ASSETS;
+    localStorage.setItem('gs_assets', JSON.stringify(assets));
+  }
+  return assets;
+}
 
 function showToast(msg) {
   const t = document.getElementById('toast');
@@ -332,7 +349,12 @@ function changeStatus(id, newStatus) {
 function renderAssets() {
   const assets = getAssets();
   document.getElementById('content').innerHTML = `
-    <div class="asset-list" style="padding-top:16px;">
+    <div style="padding:16px 20px 8px;">
+      <a href="qr.html" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--primary),var(--accent));color:white;text-decoration:none;font-size:14px;font-weight:700;box-shadow:var(--shadow-md);">
+        📱 QR 코드 관리
+      </a>
+    </div>
+    <div class="asset-list" style="padding-top:8px;">
       ${assets.map((a, i) => {
         const dotClass = a.reports >= 4 ? 'dot-bad' : a.reports >= 2 ? 'dot-warn' : 'dot-good';
         return `
