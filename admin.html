@@ -268,10 +268,9 @@ const DEFAULT_ASSETS = [
 ];
 function getAssets() {
   let assets = JSON.parse(localStorage.getItem('gs_assets') || '[]');
-  // Merge: ensure all DEFAULT_ASSETS exist by id
-  const existingIds = new Set(assets.map(a => a.id));
+  const existingNames = new Set(assets.map(a => a.name));
   DEFAULT_ASSETS.forEach(da => {
-    if (!existingIds.has(da.id)) assets.push(da);
+    if (!existingNames.has(da.name)) assets.push(da);
   });
   localStorage.setItem('gs_assets', JSON.stringify(assets));
   return assets;
