@@ -284,6 +284,11 @@ function initData() {
 }
 function getReports() { return JSON.parse(localStorage.getItem('gs_reports') || '[]'); }
 function getAssets() { return JSON.parse(localStorage.getItem('gs_assets') || '[]'); }
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
 // ── Routing ──
 const params = new URLSearchParams(location.search);
@@ -342,13 +347,13 @@ function renderHome() {
         <a class="section-link" href="status.html">전체보기 →</a>
       </div>
       ${recent.length > 0 ? recent.map((r, i) => `
-        <a class="report-card animate-in" href="status.html#${r.id}" style="animation-delay:${i * 0.05}s">
+        <a class="report-card animate-in" href="status.html#${encodeURIComponent(r.id)}" style="animation-delay:${i * 0.05}s">
           <div class="report-icon-wrap">${getCategoryEmoji(r.category)}</div>
           <div class="report-info">
-            <div class="report-title">${r.title}</div>
-            <div class="report-meta">${r.location} · ${formatDate(r.date)}</div>
+            <div class="report-title">${escapeHtml(r.title)}</div>
+            <div class="report-meta">${escapeHtml(r.location)} · ${escapeHtml(formatDate(r.date))}</div>
           </div>
-          <span class="report-status status-${r.status}">${r.status}</span>
+          <span class="report-status status-${r.status}">${escapeHtml(r.status)}</span>
         </a>
       `).join('') : `
         <div class="empty-state">
@@ -397,7 +402,7 @@ function renderAssetView(type, id) {
         <a class="asset-back" href="index.html">← 홈으로</a>
         <div class="empty-state">
           <div class="icon">❓</div>
-          <p>자산 정보를 찾을 수 없습니다<br><small style="color:var(--text-muted)">${type} / ${id}</small></p>
+          <p>자산 정보를 찾을 수 없습니다<br><small style="color:var(--text-muted)">${escapeHtml(type)} / ${escapeHtml(id)}</small></p>
         </div>
       </div>`;
     return;
@@ -409,18 +414,18 @@ function renderAssetView(type, id) {
     <div class="asset-view">
       <a class="asset-back" href="index.html">← 홈으로</a>
       <div class="asset-card animate-in">
-        <div class="asset-emoji">${asset.emoji}</div>
-        <div class="asset-name">${asset.name}</div>
-        ${asset.model ? `<div class="asset-detail">${asset.model}</div>` : ''}
-        ${asset.location ? `<div class="asset-detail">${asset.location}</div>` : ''}
-        <div class="asset-id">${asset.type}:${asset.id}</div>
+        <div class="asset-emoji">${escapeHtml(asset.emoji)}</div>
+        <div class="asset-name">${escapeHtml(asset.name)}</div>
+        ${asset.model ? `<div class="asset-detail">${escapeHtml(asset.model)}</div>` : ''}
+        ${asset.location ? `<div class="asset-detail">${escapeHtml(asset.location)}</div>` : ''}
+        <div class="asset-id">${escapeHtml(asset.type)}:${escapeHtml(asset.id)}</div>
         <div class="asset-stats">
           <div class="asset-stat">
             <div class="val">${asset.reports}</div>
             <div class="lbl">누적 신고</div>
           </div>
           <div class="asset-stat">
-            <div class="val">${asset.installed || '-'}</div>
+            <div class="val">${escapeHtml(asset.installed || '-')}</div>
             <div class="lbl">설치일</div>
           </div>
           <div class="asset-stat">
@@ -429,7 +434,7 @@ function renderAssetView(type, id) {
           </div>
         </div>
       </div>
-      <a class="asset-report-btn animate-in" href="report.html?type=${asset.type}&id=${asset.id}" style="animation-delay:0.1s">
+      <a class="asset-report-btn animate-in" href="report.html?type=${encodeURIComponent(asset.type)}&id=${encodeURIComponent(asset.id)}" style="animation-delay:0.1s">
         🚨 이 자산 신고하기
       </a>
 
@@ -437,13 +442,13 @@ function renderAssetView(type, id) {
         <div class="section" style="padding:20px 0 0;">
           <div class="section-title" style="margin-bottom:12px;">이 자산의 신고 이력</div>
           ${reports.map((r, i) => `
-            <a class="report-card animate-in" href="status.html#${r.id}" style="animation-delay:${(i+2)*0.05}s">
+            <a class="report-card animate-in" href="status.html#${encodeURIComponent(r.id)}" style="animation-delay:${(i+2)*0.05}s">
               <div class="report-icon-wrap">${getCategoryEmoji(r.category)}</div>
               <div class="report-info">
-                <div class="report-title">${r.title}</div>
-                <div class="report-meta">${formatDate(r.date)}</div>
+                <div class="report-title">${escapeHtml(r.title)}</div>
+                <div class="report-meta">${escapeHtml(formatDate(r.date))}</div>
               </div>
-              <span class="report-status status-${r.status}">${r.status}</span>
+              <span class="report-status status-${r.status}">${escapeHtml(r.status)}</span>
             </a>
           `).join('')}
         </div>

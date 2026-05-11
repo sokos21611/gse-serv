@@ -440,6 +440,11 @@ const HISTORY_DATA = [
 ];
 
 function getReports() { return JSON.parse(localStorage.getItem('gs_reports') || '[]'); }
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 const ASSETS_VERSION = '4';
 const DEFAULT_ASSETS = [
   { id:'A001', type:'projector', name:'B동 3층 회의실 프로젝터', model:'Epson EB-2265U', location:'B동 3층 회의실', installed:'2023.06', reports:4, emoji:'📽️' },
@@ -496,16 +501,16 @@ function renderReports() {
       ${reports.map((r, i) => `
         <div class="admin-card animate-in" style="animation-delay:${i * 0.03}s">
           <div class="admin-card-top">
-            <div class="admin-title">${r.title}</div>
-            <div class="admin-id">${r.id}</div>
+            <div class="admin-title">${escapeHtml(r.title)}</div>
+            <div class="admin-id">${escapeHtml(r.id)}</div>
           </div>
           <div class="admin-meta">
-            <span>${r.category}</span>
-            <span>📍 ${r.location}</span>
-            <span>${r.date}</span>
+            <span>${escapeHtml(r.category)}</span>
+            <span>📍 ${escapeHtml(r.location)}</span>
+            <span>${escapeHtml(r.date)}</span>
             ${r.anonymous ? '<span style="color:var(--accent)">익명</span>' : ''}
           </div>
-          <select class="status-select" onchange="changeStatus('${r.id}', this.value)">
+          <select class="status-select" onchange="changeStatus('${escapeHtml(r.id)}', this.value)">
             <option value="접수" ${r.status==='접수'?'selected':''}>접수</option>
             <option value="처리중" ${r.status==='처리중'?'selected':''}>처리중</option>
             <option value="완료" ${r.status==='완료'?'selected':''}>완료</option>
@@ -544,12 +549,14 @@ function renderAssets() {
     <div class="asset-list" style="padding-top:8px;">
       ${assets.map((a, i) => {
         const dotClass = (a.reports||0) >= 4 ? 'dot-bad' : (a.reports||0) >= 2 ? 'dot-warn' : 'dot-good';
+        const detail = [a.model, a.location, a.installed ? '설치 '+a.installed : '', a.manager].filter(Boolean).join(' · ')
+          + (a.reports ? ' · 신고 '+a.reports+'건' : '');
         return `
           <div class="asset-card animate-in" style="animation-delay:${i * 0.04}s">
-            <div class="asset-emoji">${a.emoji || '📦'}</div>
+            <div class="asset-emoji">${escapeHtml(a.emoji || '📦')}</div>
             <div class="asset-info">
-              <div class="asset-name">${a.name}</div>
-              <div class="asset-detail">${[a.model, a.location, a.installed ? '설치 '+a.installed : '', a.manager].filter(Boolean).join(' · ')}${a.reports ? ' · 신고 '+a.reports+'건' : ''}</div>
+              <div class="asset-name">${escapeHtml(a.name)}</div>
+              <div class="asset-detail">${escapeHtml(detail)}</div>
             </div>
             <div class="asset-status-dot ${dotClass}" title="${a.reports||0}건 신고"></div>
           </div>`;
@@ -684,7 +691,7 @@ function renderExcelPreview() {
   let html = `<div class="excel-count">📋 ${pendingExcelAssets.length}건 감지됨</div>`;
   html += '<div class="excel-preview"><table><tr>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr>';
   pendingExcelAssets.slice(0, 10).forEach(a => {
-    html += '<tr>' + [a.name, a.model, a.location, a.category, a.installed, a.id, a.manager, a.memo].map(v => `<td>${v||''}</td>`).join('') + '</tr>';
+    html += '<tr>' + [a.name, a.model, a.location, a.category, a.installed, a.id, a.manager, a.memo].map(v => `<td>${escapeHtml(v||'')}</td>`).join('') + '</tr>';
   });
   if (pendingExcelAssets.length > 10) html += `<tr><td colspan="${cols.length}" style="text-align:center;color:var(--text-muted)">... 외 ${pendingExcelAssets.length - 10}건</td></tr>`;
   html += '</table></div>';

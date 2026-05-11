@@ -240,6 +240,11 @@ body {
 let filter = '전체';
 
 function getReports() { return JSON.parse(localStorage.getItem('gs_reports') || '[]'); }
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
 function formatDate(d) {
   const diff = Math.floor((new Date() - new Date(d)) / 86400000);
@@ -269,22 +274,22 @@ function render() {
   document.getElementById('list').innerHTML = `
     <div class="report-list">
       ${filtered.length > 0 ? filtered.map((r, i) => `
-        <div class="report-card animate-in" style="animation-delay:${i * 0.04}s" onclick="openDetail('${r.id}')">
+        <div class="report-card animate-in" style="animation-delay:${i * 0.04}s" onclick="openDetail('${escapeHtml(r.id)}')">
           <div class="report-top">
-            <div class="report-title">${r.title}</div>
-            <span class="report-status status-${r.status}">${r.status}</span>
+            <div class="report-title">${escapeHtml(r.title)}</div>
+            <span class="report-status status-${r.status}">${escapeHtml(r.status)}</span>
           </div>
           <div class="report-meta">
-            <span class="report-cat-badge">${r.category}</span>
-            <span class="report-meta-item">📍 ${r.location}</span>
-            <span class="report-meta-item">${formatDate(r.date)}</span>
+            <span class="report-cat-badge">${escapeHtml(r.category)}</span>
+            <span class="report-meta-item">📍 ${escapeHtml(r.location)}</span>
+            <span class="report-meta-item">${escapeHtml(formatDate(r.date))}</span>
             ${r.anonymous ? '<span class="anon-badge">익명</span>' : ''}
           </div>
         </div>
       `).join('') : `
         <div class="empty-state">
           <div class="icon">📭</div>
-          <p>"${filter}" 상태의 신고가 없습니다</p>
+          <p>"${escapeHtml(filter)}" 상태의 신고가 없습니다</p>
         </div>
       `}
     </div>`;
@@ -304,26 +309,26 @@ function openDetail(id) {
   const modal = document.getElementById('modal');
   modal.innerHTML = `
     <div class="modal-handle"></div>
-    <div class="modal-title">${report.title}</div>
-    <div class="modal-subtitle">${report.id} · ${report.date}</div>
+    <div class="modal-title">${escapeHtml(report.title)}</div>
+    <div class="modal-subtitle">${escapeHtml(report.id)} · ${escapeHtml(report.date)}</div>
 
     <div class="timeline">
       ${(report.timeline || []).reverse().map((t, i) => `
         <div class="tl-item ${t.action === '완료' ? 'done' : ''}">
           <div class="tl-dot"></div>
-          <div class="tl-date">${t.date}</div>
-          <div class="tl-action">${t.action}</div>
-          <div class="tl-note">${t.note}</div>
+          <div class="tl-date">${escapeHtml(t.date)}</div>
+          <div class="tl-action">${escapeHtml(t.action)}</div>
+          <div class="tl-note">${escapeHtml(t.note)}</div>
         </div>
       `).join('')}
     </div>
 
     <div class="detail-section">
-      <div class="detail-row"><span class="detail-key">카테고리</span><span class="detail-val">${report.category}</span></div>
-      <div class="detail-row"><span class="detail-key">위치</span><span class="detail-val">${report.location}</span></div>
-      <div class="detail-row"><span class="detail-key">상태</span><span class="detail-val"><span class="report-status status-${report.status}">${report.status}</span></span></div>
+      <div class="detail-row"><span class="detail-key">카테고리</span><span class="detail-val">${escapeHtml(report.category)}</span></div>
+      <div class="detail-row"><span class="detail-key">위치</span><span class="detail-val">${escapeHtml(report.location)}</span></div>
+      <div class="detail-row"><span class="detail-key">상태</span><span class="detail-val"><span class="report-status status-${report.status}">${escapeHtml(report.status)}</span></span></div>
       <div class="detail-row"><span class="detail-key">익명</span><span class="detail-val">${report.anonymous ? '예' : '아니오'}</span></div>
-      ${report.description ? `<div class="detail-row"><span class="detail-key">설명</span><span class="detail-val" style="max-width:65%;text-align:right">${report.description}</span></div>` : ''}
+      ${report.description ? `<div class="detail-row"><span class="detail-key">설명</span><span class="detail-val" style="max-width:65%;text-align:right">${escapeHtml(report.description)}</span></div>` : ''}
     </div>
 
     <button class="modal-close-btn" onclick="closeModal()">닫기</button>

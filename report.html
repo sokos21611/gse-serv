@@ -282,6 +282,11 @@ const CATEGORIES = [
 ];
 
 const ASSETS_DB = JSON.parse(localStorage.getItem('gs_assets') || '[]');
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 const params = new URLSearchParams(location.search);
 
 let state = {
@@ -352,10 +357,10 @@ function renderQRHero() {
   }
   area.innerHTML = `
     <div class="qr-hero">
-      <div class="qr-hero-emoji">${state.asset.emoji}</div>
-      <div class="qr-hero-name">${state.asset.name}</div>
-      ${state.asset.model ? `<div class="qr-hero-detail">${state.asset.model}</div>` : ''}
-      <div class="qr-hero-loc">📍 ${state.asset.location}</div>
+      <div class="qr-hero-emoji">${escapeHtml(state.asset.emoji)}</div>
+      <div class="qr-hero-name">${escapeHtml(state.asset.name)}</div>
+      ${state.asset.model ? `<div class="qr-hero-detail">${escapeHtml(state.asset.model)}</div>` : ''}
+      <div class="qr-hero-loc">📍 ${escapeHtml(state.asset.location)}</div>
     </div>
     <div class="qr-hero-divider">이 자산에 대해 신고합니다</div>
   `;
@@ -384,10 +389,10 @@ function renderStep1() {
     <div class="step-content animate-in">
       ${state.asset ? `
         <div class="prefill-card">
-          <div class="prefill-emoji">${state.asset.emoji}</div>
+          <div class="prefill-emoji">${escapeHtml(state.asset.emoji)}</div>
           <div class="prefill-info">
-            <div class="prefill-name">${state.asset.name}</div>
-            <div class="prefill-detail">${state.asset.model || state.asset.location}</div>
+            <div class="prefill-name">${escapeHtml(state.asset.name)}</div>
+            <div class="prefill-detail">${escapeHtml(state.asset.model || state.asset.location)}</div>
           </div>
           <div class="prefill-badge">QR 인식</div>
         </div>
@@ -467,11 +472,11 @@ function renderStep3() {
 
       <div class="form-group">
         <label class="form-label">위치</label>
-        <input class="form-input" type="text" placeholder="예: B동 3층 회의실" value="${state.location}" oninput="state.location=this.value" />
+        <input class="form-input" type="text" placeholder="예: B동 3층 회의실" value="${escapeHtml(state.location)}" oninput="state.location=this.value" />
       </div>
       <div class="form-group">
         <label class="form-label">설명</label>
-        <textarea class="form-input" placeholder="문제 상황을 자세히 설명해 주세요" oninput="state.description=this.value">${state.description}</textarea>
+        <textarea class="form-input" placeholder="문제 상황을 자세히 설명해 주세요" oninput="state.description=this.value">${escapeHtml(state.description)}</textarea>
       </div>
     </div>`;
   const canNext = state.location.trim() && state.description.trim();
@@ -488,11 +493,11 @@ function renderStep4() {
       <div class="step-title">신고 내용 확인</div>
       <div class="step-desc">아래 내용이 맞는지 확인해 주세요</div>
       <div class="summary-card">
-        <div class="summary-row"><span class="summary-key">카테고리</span><span class="summary-val">${state.category.emoji} ${state.category.name}</span></div>
-        <div class="summary-row"><span class="summary-key">유형</span><span class="summary-val">${state.subType}</span></div>
-        ${state.asset ? `<div class="summary-row"><span class="summary-key">자산</span><span class="summary-val">${state.asset.name}</span></div>` : ''}
-        <div class="summary-row"><span class="summary-key">위치</span><span class="summary-val">${state.location}</span></div>
-        <div class="summary-row"><span class="summary-key">설명</span><span class="summary-val">${state.description}</span></div>
+        <div class="summary-row"><span class="summary-key">카테고리</span><span class="summary-val">${state.category.emoji} ${escapeHtml(state.category.name)}</span></div>
+        <div class="summary-row"><span class="summary-key">유형</span><span class="summary-val">${escapeHtml(state.subType)}</span></div>
+        ${state.asset ? `<div class="summary-row"><span class="summary-key">자산</span><span class="summary-val">${escapeHtml(state.asset.name)}</span></div>` : ''}
+        <div class="summary-row"><span class="summary-key">위치</span><span class="summary-val">${escapeHtml(state.location)}</span></div>
+        <div class="summary-row"><span class="summary-key">설명</span><span class="summary-val">${escapeHtml(state.description)}</span></div>
         <div class="summary-row"><span class="summary-key">익명</span><span class="summary-val">${state.anonymous ? '예' : '아니오'}</span></div>
       </div>
     </div>`;
@@ -537,7 +542,7 @@ function renderSuccess() {
       <div class="success-icon">✅</div>
       <div class="success-title">접수 완료!</div>
       <div class="success-desc">신고가 정상적으로 접수되었습니다.<br>처리 상태는 "내 현황"에서 확인할 수 있습니다.</div>
-      <div class="success-id">${state.reportId}</div><br><br>
+      <div class="success-id">${escapeHtml(state.reportId)}</div><br><br>
       <a class="success-btn" href="status.html">내 현황 보기</a>
     </div>`;
   document.getElementById('buttons').innerHTML = '';
