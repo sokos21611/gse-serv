@@ -271,7 +271,9 @@ textarea.form-input { min-height: 120px; resize: vertical; }
   </a>
 </nav>
 
-<script>
+<script type="module">
+import { getAsset, createReport } from './lib/supabase.js';
+
 const CATEGORIES = [
   { key:'facility', name:'시설', emoji:'🏗️', subs:['누수/배관','전기/조명','도어/창문','엘리베이터','기타 시설'] },
   { key:'environment', name:'환경', emoji:'🌡️', subs:['냉방','난방','환기','소음','악취'] },
@@ -281,7 +283,6 @@ const CATEGORIES = [
   { key:'other', name:'기타', emoji:'📝', subs:['보안','비품 요청','기타 문의'] },
 ];
 
-const ASSETS_DB = JSON.parse(localStorage.getItem('gs_assets') || '[]');
 function escapeHtml(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -300,6 +301,7 @@ let state = {
   assetId: params.get('id') || null,
   asset: null,
 };
+window.state = state; // legacy inline onclick 호환
 
 // QR direct params: ?qr=1&name=자산명&model=모델명&loc=위치&cat=카테고리키
 if (params.get('qr')) {
@@ -327,17 +329,24 @@ if (!params.get('qr') && params.get('category')) {
   const cat = CATEGORIES.find(c => c.key === params.get('category'));
   if (cat) { state.category = cat; state.step = 2; }
 }
-if (!params.get('qr') && state.assetType && state.assetId) {
-  state.asset = ASSETS_DB.find(a => a.id === state.assetId);
-  if (state.asset) {
-    state.location = state.asset.location || state.asset.name;
-    const typeMap = { projector:'it', printer:'it', restroom:'facility', room:'facility', parking:'parking', pantry:'facility' };
-    const cat = CATEGORIES.find(c => c.key === (typeMap[state.assetType] || 'other'));
-    if (cat) state.category = cat;
-  }
-}
 
-render();
+async function init() {
+  if (!params.get('qr') && state.assetType && state.assetId) {
+    try {
+      state.asset = await getAsset(state.assetId);
+      if (state.asset) {
+        state.location = state.asset.location || state.asset.name;
+        const typeMap = { projector:'it', printer:'it', restroom:'facility', room:'facility', parking:'parking', pantry:'facility' };
+        const cat = CATEGORIES.find(c => c.key === (typeMap[state.assetType] || 'other'));
+        if (cat) state.category = cat;
+      }
+    } catch (err) {
+      console.error('asset load failed', err);
+    }
+  }
+  render();
+}
+init();
 
 function render() {
   renderQRHero();
@@ -508,33 +517,30 @@ function renderStep4() {
     </div>`;
 }
 
-function submitReport() {
-  const reports = JSON.parse(localStorage.getItem('gs_reports') || '[]');
-  const id = 'RPT-' + String(reports.length + 1).padStart(3, '0');
-  const now = new Date();
-  const dateStr = now.toISOString().split('T')[0];
-  const timeStr = now.toTimeString().slice(0,5);
-
-  const report = {
-    id,
-    title: `${state.subType} — ${state.location}`,
-    category: state.category.name,
-    location: state.location,
-    status: '접수',
-    date: dateStr,
-    assetId: state.asset ? state.asset.id : '',
-    description: state.description,
-    anonymous: state.anonymous,
-    timeline: [{ date: `${dateStr} ${timeStr}`, action: '접수', note: state.anonymous ? '익명 신고 접수됨' : '신고 접수됨' }],
-  };
-
-  reports.unshift(report);
-  localStorage.setItem('gs_reports', JSON.stringify(reports));
-
-  state.reportId = id;
-  state.step = 5;
-  render();
+async function submitReport() {
+  const btns = document.querySelectorAll('.btn-primary');
+  btns.forEach(b => { b.disabled = true; b.textContent = '접수 중…'; });
+  try {
+    const created = await createReport({
+      title: `${state.subType} — ${state.location}`,
+      category: state.category.name,
+      location: state.location,
+      asset_id: state.asset ? state.asset.id : null,
+      description: state.description,
+      anonymous: state.anonymous,
+    });
+    state.reportId = created.id;
+    state.step = 5;
+    render();
+  } catch (err) {
+    alert('⚠️ 접수 실패: ' + err.message);
+    btns.forEach(b => { b.disabled = false; b.textContent = '접수하기'; });
+  }
 }
+window.submitReport = submitReport;
+window.render = render;
+window.selectCategory = selectCategory;
+window.selectSub = selectSub;
 
 function renderSuccess() {
   document.getElementById('app').innerHTML = `

@@ -1,41 +1,39 @@
-# WORK_IN_PROGRESS — 계정 전환 핸드오프 메모
+# WORK_IN_PROGRESS — Supabase 백엔드 도입
 
-마지막 업데이트: 2026-05-07
-마지막 커밋: `91dc592 chore: 엔터프라이즈 계정 전환 전 백업`
+마지막 업데이트: 2026-05-11
 
 ## 현재 상태
 
-- 작업 트리 클린, `origin/main`과 동기화됨 (단, **로컬 백업 커밋은 아직 푸시 안 됨**).
-- 최근 흐름: 자산 등록(개별 + 엑셀) → 자산 중복 방지 → QR 스캔 시 자산 전용 신고 화면 바로 진입.
-- `qr.html`은 삭제됨. QR 진입은 `report.html?qr=1&...` 딥링크로 통합.
+- **Supabase로 백엔드 전환** (이전: localStorage). 프로젝트 `gse-serv`, URL `https://wavussrzhqzyircqpaiw.supabase.co`, region Singapore, 무료 티어.
+- 4개 페이지(index/report/status/admin) 모두 `lib/supabase.js`를 import해서 데이터 R/W. ES module 기반.
+- `migrate.html` — 기존 브라우저의 localStorage 데이터를 Supabase로 1회 이관하는 유틸.
 
-## 계정 전환 후 바로 해야 할 것
+## 사용자(운영자)가 1회 해야 할 것
 
-1. 새 계정으로 `git push origin main` — 백업 커밋 `91dc592` 원격 반영.
-2. Vercel 재연결: `.vercel/project.json` (projectId `prj_n59FocYj4Ufrl59GA2ccJyyJCo1Y`)이 이전 계정 소유. 엔터프라이즈 계정에서 `vercel link` 다시 실행 → 기존 파일 덮어쓰기.
-3. `chongmu-service` 프로젝트를 신규 계정/팀으로 이관(transfer)하거나, 새로 생성 후 도메인 다시 붙이기 결정.
+1. **SQL Editor에서 `supabase/schema.sql` 실행** — 테이블/시퀀스/RLS/시드까지 한 번에. 멱등이라 재실행 안전.
+2. (선택) `migrate.html` 열어 기존 localStorage 데이터 이관 후 "localStorage 초기화" 버튼.
+3. 정적 서버로 띄워 동작 확인 (`python -m http.server`).
 
 ## 미해결 / 다음 차례
 
 ### 우선순위 ↓
 
-- **신고 ID 충돌**: `'RPT-' + (reports.length + 1)` 방식 — 삭제 기능 추가 시 ID 재사용 발생. UUID나 max+1 또는 단조 증가 카운터로 교체 검토.
-- **디자인 토큰 중복**: `:root { --primary ... }` 와 `.bottom-nav`가 5개 HTML에 복붙. 공유 CSS로 빼면 유지보수 비용 절감.
+- **관리자 인증 게이트**: 현재 `admin.html`은 누구나 접근/상태변경 가능. Supabase Auth 매직 링크 + 화이트리스트 이메일 또는 단순 PIN 게이트 도입 필요. RLS 정책도 `authenticated`로 좁혀야 함.
+- **Realtime 구독**: `status.html`/`admin.html`에 `supabase.channel().on('postgres_changes', ...)` 도입하면 다중 사용자 실시간 동기화 가능. 지금은 페이지 로드 시점 스냅샷.
+- **assets.reports 자동 카운트**: 현재 정적 컬럼. 트리거로 신고 생성/삭제 시 자동 증감 가능.
+- **디자인 토큰 중복**: `:root { --primary ... }` 와 `.bottom-nav`가 4개 HTML에 복붙. 공유 CSS로 빼면 유지보수 비용 절감.
+- **Vercel 배포**: `.vercel/project.json` (이전 계정 소유) 재연결 또는 `chongmu-service` 프로젝트 transfer.
 
-### 해결됨 (2026-05-11 코드 리뷰)
+### 해결됨
 
-- ~~자산 데이터 두 계보 통합~~ → admin 기준 단일 스키마(A001~A008 + `type`), `gs_assets_v='4'`로 통일. index/admin 모두 동일 시드 데이터 사용. 등록 후 리셋되던 `gs_assets_v` 불일치 버그(`!== '2'` vs `setItem '3'`)도 함께 수정 — `saveAssets()` 헬퍼로 일원화.
-- ~~`admin.html`의 깨진 `qr.html` 링크~~ → QR관리 버튼 제거 (`.action-btn.qr` CSS도 함께 삭제). 향후 QR 관리 UI는 admin 내부 모달로 신규 구현 권장.
-- ~~사용자 입력 `innerHTML` XSS 위험~~ → 4개 페이지(index/report/status/admin)에 `escapeHtml` 헬퍼 각각 추가하고 사용자/QR 파라미터/엑셀 입력이 렌더되는 모든 위치에 적용. URL `href`로 들어가는 ID는 `encodeURIComponent`로 처리.
-
-## 아키텍처 핵심 (CLAUDE.md 요약)
-
-- 빌드/패키지 매니저/테스트 없음. 정적 HTML + 인라인 `<script>`.
-- 페이지 간 통신은 **localStorage + URL 쿼리 파라미터**가 전부.
-- localStorage 키: `gs_reports`, `gs_assets`, `gs_assets_v`.
-- 로컬 확인 시 `python -m http.server` 같은 정적 서버 필수 (`file://`는 origin 분리되어 localStorage 공유 안 됨).
+- ~~localStorage 데이터 휘발/브라우저 격리 문제~~ → Supabase 도입.
+- ~~신고 ID 충돌 (`reports.length+1`)~~ → PostgreSQL sequence + `next_report_id()`.
+- ~~자산 데이터 두 계보 (index/admin DEFAULT_ASSETS 중복)~~ → DB 단일 시드.
 
 ## 참고 파일
 
-- `CLAUDE.md` — 프로젝트 컨텍스트 (새 Claude가 자동 로드).
+- `CLAUDE.md` — 프로젝트 컨텍스트.
+- `lib/supabase.js` — Supabase 클라이언트 + CRUD 헬퍼.
+- `supabase/schema.sql` — DB 스키마 + RLS + 시드.
+- `migrate.html` — localStorage → Supabase 1회 이관.
 - `index.html` / `report.html` / `status.html` / `admin.html` — 페이지 4개.

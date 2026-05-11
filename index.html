@@ -250,40 +250,9 @@ body {
   </a>
 </nav>
 
-<script>
-// ── Data Layer ──
-const ASSETS_VERSION = '4';
-const ASSETS = [
-  { id:'A001', type:'projector', name:'B동 3층 회의실 프로젝터', model:'Epson EB-2265U', location:'B동 3층 회의실', installed:'2023.06', reports:4, emoji:'📽️' },
-  { id:'A002', type:'printer',   name:'B동 4층 복합기',          model:'HP LaserJet M634', location:'B동 4층',         installed:'2024.01', reports:2, emoji:'🖨️' },
-  { id:'A003', type:'restroom',  name:'A동 2층 남자화장실',       model:'',                 location:'A동 2층',         installed:'',        reports:3, emoji:'🚻' },
-  { id:'A004', type:'room',      name:'B동 3층 회의실 2',         model:'10인실',           location:'B동 3층',         installed:'2022.03', reports:5, emoji:'🏢' },
-  { id:'A005', type:'parking',   name:'주차장 1층 게이트',         model:'ParkPlus G300',    location:'주차장 1층',      installed:'2023.09', reports:1, emoji:'🅿️' },
-  { id:'A006', type:'pantry',    name:'A동 5층 탕비실',           model:'',                 location:'A동 5층',         installed:'',        reports:1, emoji:'☕' },
-  { id:'A007', type:'pantry',    name:'전자동 커피머신A',          model:'Jura GIGA X8c',    location:'37층 타운홀',     installed:'',        reports:0, emoji:'☕' },
-  { id:'A008', type:'restroom',  name:'38층 남자 화장실',         model:'',                 location:'38층 남자 화장실', installed:'',        reports:0, emoji:'🚻' },
-];
+<script type="module">
+import { listReports, listAssets, getAsset } from './lib/supabase.js';
 
-const DUMMY_REPORTS = [
-  { id:'RPT-001', title:'프로젝터 전원 안 됨', category:'IT장비', location:'B동 3층 회의실', status:'처리중', date:'2026-03-24', assetId:'A001', description:'회의 중 프로젝터 전원이 갑자기 꺼짐', anonymous:false,
-    timeline:[{date:'2026-03-24 09:30', action:'접수', note:'신고 접수됨'},{date:'2026-03-24 14:00', action:'처리중', note:'담당자 배정 (김기사)'}] },
-  { id:'RPT-002', title:'복합기 용지 걸림 반복', category:'IT장비', location:'B동 4층', status:'접수', date:'2026-03-23', assetId:'A002', description:'용지 걸림이 하루 3-4회 반복', anonymous:false,
-    timeline:[{date:'2026-03-23 11:20', action:'접수', note:'신고 접수됨'}] },
-  { id:'RPT-003', title:'화장실 수도꼭지 누수', category:'시설', location:'A동 2층 남자화장실', status:'완료', date:'2026-03-20', assetId:'A003', description:'세면대 오른쪽 수도꼭지에서 물이 계속 흘러나옴', anonymous:true,
-    timeline:[{date:'2026-03-20 08:00', action:'접수', note:'익명 신고 접수'},{date:'2026-03-20 10:30', action:'처리중', note:'배관 점검 시작'},{date:'2026-03-21 16:00', action:'완료', note:'수도꼭지 교체 완료'}] },
-  { id:'RPT-004', title:'냉방 온도 너무 낮음', category:'환경', location:'B동 3층 사무실', status:'접수', date:'2026-03-25', assetId:'', description:'오후 시간대 실내 온도가 18도 이하로 추움', anonymous:false,
-    timeline:[{date:'2026-03-25 08:45', action:'접수', note:'신고 접수됨'}] },
-];
-
-function initData() {
-  if (localStorage.getItem('gs_assets_v') !== ASSETS_VERSION) {
-    localStorage.setItem('gs_assets', JSON.stringify(ASSETS));
-    localStorage.setItem('gs_assets_v', ASSETS_VERSION);
-  }
-  if (!localStorage.getItem('gs_reports')) localStorage.setItem('gs_reports', JSON.stringify(DUMMY_REPORTS));
-}
-function getReports() { return JSON.parse(localStorage.getItem('gs_reports') || '[]'); }
-function getAssets() { return JSON.parse(localStorage.getItem('gs_assets') || '[]'); }
 function escapeHtml(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -295,19 +264,22 @@ const params = new URLSearchParams(location.search);
 const qrType = params.get('type');
 const qrId = params.get('id');
 
-initData();
-
 const app = document.getElementById('app');
 
 if (qrType && qrId) {
-  renderAssetView(qrType, qrId);
+  renderAssetView(qrType, qrId).catch(showError);
 } else {
-  renderHome();
+  renderHome().catch(showError);
+}
+
+function showError(err) {
+  console.error(err);
+  app.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>데이터 로드 실패<br><small>${escapeHtml(err.message)}</small></p></div>`;
 }
 
 // ── Home View ──
-function renderHome() {
-  const reports = getReports();
+async function renderHome() {
+  const reports = await listReports();
   const recent = reports.slice(0, 3);
   const statusCounts = { '접수': 0, '처리중': 0, '완료': 0 };
   reports.forEach(r => { if (statusCounts[r.status] !== undefined) statusCounts[r.status]++; });
@@ -392,9 +364,12 @@ function renderHome() {
 }
 
 // ── Asset View ──
-function renderAssetView(type, id) {
-  const assets = getAssets();
-  const asset = assets.find(a => a.id === id) || assets.find(a => a.type === type);
+async function renderAssetView(type, id) {
+  let asset = await getAsset(id);
+  if (!asset) {
+    const assets = await listAssets();
+    asset = assets.find(a => a.type === type);
+  }
 
   if (!asset) {
     app.innerHTML = `
@@ -408,7 +383,8 @@ function renderAssetView(type, id) {
     return;
   }
 
-  const reports = getReports().filter(r => r.assetId === asset.id);
+  const allReports = await listReports();
+  const reports = allReports.filter(r => r.asset_id === asset.id);
 
   app.innerHTML = `
     <div class="asset-view">

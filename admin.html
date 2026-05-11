@@ -414,7 +414,9 @@ body {
 </nav>
 
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-<script>
+<script type="module">
+import { listReports, listAssets, updateReportStatus, createAsset, bulkCreateAssets } from './lib/supabase.js';
+
 let activeTab = 'reports';
 let pendingExcelAssets = [];
 const TAB_LIST = [
@@ -439,33 +441,10 @@ const HISTORY_DATA = [
   { text:'A동 5층 탕비실 정수기 필터 교체', date:'2026-01-20' },
 ];
 
-function getReports() { return JSON.parse(localStorage.getItem('gs_reports') || '[]'); }
 function escapeHtml(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-const ASSETS_VERSION = '4';
-const DEFAULT_ASSETS = [
-  { id:'A001', type:'projector', name:'B동 3층 회의실 프로젝터', model:'Epson EB-2265U', location:'B동 3층 회의실', installed:'2023.06', reports:4, emoji:'📽️' },
-  { id:'A002', type:'printer',   name:'B동 4층 복합기',          model:'HP LaserJet M634', location:'B동 4층',         installed:'2024.01', reports:2, emoji:'🖨️' },
-  { id:'A003', type:'restroom',  name:'A동 2층 남자화장실',       model:'',                 location:'A동 2층',         installed:'',        reports:3, emoji:'🚻' },
-  { id:'A004', type:'room',      name:'B동 3층 회의실 2',         model:'10인실',           location:'B동 3층',         installed:'2022.03', reports:5, emoji:'🏢' },
-  { id:'A005', type:'parking',   name:'주차장 1층 게이트',         model:'ParkPlus G300',    location:'주차장 1층',      installed:'2023.09', reports:1, emoji:'🅿️' },
-  { id:'A006', type:'pantry',    name:'A동 5층 탕비실',           model:'',                 location:'A동 5층',         installed:'',        reports:1, emoji:'☕' },
-  { id:'A007', type:'pantry',    name:'전자동 커피머신A',          model:'Jura GIGA X8c',    location:'37층 타운홀',     installed:'',        reports:0, emoji:'☕' },
-  { id:'A008', type:'restroom',  name:'38층 남자 화장실',         model:'',                 location:'38층 남자 화장실', installed:'',        reports:0, emoji:'🚻' },
-];
-function getAssets() {
-  if (localStorage.getItem('gs_assets_v') !== ASSETS_VERSION) {
-    localStorage.setItem('gs_assets', JSON.stringify(DEFAULT_ASSETS));
-    localStorage.setItem('gs_assets_v', ASSETS_VERSION);
-  }
-  return JSON.parse(localStorage.getItem('gs_assets') || '[]');
-}
-function saveAssets(assets) {
-  localStorage.setItem('gs_assets', JSON.stringify(assets));
-  localStorage.setItem('gs_assets_v', ASSETS_VERSION);
 }
 
 function showToast(msg) {
@@ -475,19 +454,26 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2000);
 }
 
-function render() {
-  // Tabs
+async function render() {
   document.getElementById('tabs').innerHTML = TAB_LIST.map(t =>
-    `<div class="tab ${activeTab === t.key ? 'active' : ''}" onclick="activeTab='${t.key}';render()">${t.label}</div>`
+    `<div class="tab ${activeTab === t.key ? 'active' : ''}" data-tab="${t.key}">${t.label}</div>`
   ).join('');
+  document.querySelectorAll('#tabs .tab').forEach(el => {
+    el.addEventListener('click', () => { activeTab = el.dataset.tab; render(); });
+  });
 
-  if (activeTab === 'reports') renderReports();
-  else if (activeTab === 'assets') renderAssets();
-  else if (activeTab === 'schedule') renderSchedule();
+  try {
+    if (activeTab === 'reports') await renderReports();
+    else if (activeTab === 'assets') await renderAssets();
+    else if (activeTab === 'schedule') renderSchedule();
+  } catch (err) {
+    console.error(err);
+    document.getElementById('content').innerHTML = `<div class="section-empty">⚠️ 데이터 로드 실패: ${escapeHtml(err.message)}</div>`;
+  }
 }
 
-function renderReports() {
-  const reports = getReports();
+async function renderReports() {
+  const reports = await listReports();
   const counts = { '접수': 0, '처리중': 0, '완료': 0 };
   reports.forEach(r => { if (counts[r.status] !== undefined) counts[r.status]++; });
 
@@ -510,7 +496,7 @@ function renderReports() {
             <span>${escapeHtml(r.date)}</span>
             ${r.anonymous ? '<span style="color:var(--accent)">익명</span>' : ''}
           </div>
-          <select class="status-select" onchange="changeStatus('${escapeHtml(r.id)}', this.value)">
+          <select class="status-select" data-report-id="${escapeHtml(r.id)}">
             <option value="접수" ${r.status==='접수'?'selected':''}>접수</option>
             <option value="처리중" ${r.status==='처리중'?'selected':''}>처리중</option>
             <option value="완료" ${r.status==='완료'?'selected':''}>완료</option>
@@ -519,32 +505,27 @@ function renderReports() {
       `).join('')}
       ${reports.length === 0 ? '<div class="section-empty">신고 내역이 없습니다</div>' : ''}
     </div>`;
+  document.querySelectorAll('.status-select').forEach(sel => {
+    sel.addEventListener('change', () => changeStatus(sel.dataset.reportId, sel.value));
+  });
 }
 
-function changeStatus(id, newStatus) {
-  const reports = getReports();
-  const r = reports.find(x => x.id === id);
-  if (!r || r.status === newStatus) return;
-
-  const now = new Date();
-  const dateStr = now.toISOString().split('T')[0];
-  const timeStr = now.toTimeString().slice(0,5);
-
-  r.status = newStatus;
-  r.timeline = r.timeline || [];
-  r.timeline.push({ date: `${dateStr} ${timeStr}`, action: newStatus, note: `상태 변경: ${newStatus}` });
-
-  localStorage.setItem('gs_reports', JSON.stringify(reports));
-  showToast(`${r.id} → ${newStatus}`);
-  render();
+async function changeStatus(id, newStatus) {
+  try {
+    await updateReportStatus(id, newStatus);
+    showToast(`${id} → ${newStatus}`);
+    render();
+  } catch (err) {
+    showToast('⚠️ 상태 변경 실패: ' + err.message);
+  }
 }
 
-function renderAssets() {
-  const assets = getAssets();
+async function renderAssets() {
+  const assets = await listAssets();
   document.getElementById('content').innerHTML = `
     <div class="asset-actions">
-      <button class="action-btn add" onclick="openModal('addModal')">➕ 등록</button>
-      <button class="action-btn excel" onclick="openModal('excelModal')">📊 엑셀</button>
+      <button class="action-btn add" data-modal="addModal">➕ 등록</button>
+      <button class="action-btn excel" data-modal="excelModal">📊 엑셀</button>
     </div>
     <div class="asset-list" style="padding-top:8px;">
       ${assets.map((a, i) => {
@@ -563,6 +544,9 @@ function renderAssets() {
       }).join('')}
       ${assets.length === 0 ? '<div class="section-empty">등록된 자산이 없습니다</div>' : ''}
     </div>`;
+  document.querySelectorAll('[data-modal]').forEach(btn => {
+    btn.addEventListener('click', () => openModal(btn.dataset.modal));
+  });
 }
 
 function renderSchedule() {
@@ -588,8 +572,8 @@ function renderSchedule() {
             <div class="sched-dow">${s.dow}</div>
           </div>
           <div class="sched-info">
-            <div class="sched-title">${s.title}</div>
-            <div class="sched-desc">${s.desc}</div>
+            <div class="sched-title">${escapeHtml(s.title)}</div>
+            <div class="sched-desc">${escapeHtml(s.desc)}</div>
             <span class="sched-type type-${s.type}">${typeLabels[s.type] || s.type}</span>
           </div>
         </div>`;
@@ -602,8 +586,8 @@ function renderSchedule() {
     html += `
       <div class="history-item">
         <div class="history-dot"></div>
-        <div class="history-text">${h.text}</div>
-        <div class="history-date">${h.date}</div>
+        <div class="history-text">${escapeHtml(h.text)}</div>
+        <div class="history-date">${escapeHtml(h.date)}</div>
       </div>`;
   });
 
@@ -616,6 +600,7 @@ function closeModal(id) {
   document.getElementById(id).classList.remove('show');
   if (id === 'excelModal') { pendingExcelAssets = []; document.getElementById('excelPreview').innerHTML = ''; document.getElementById('excelSubmitBtn').style.display = 'none'; }
 }
+window.closeModal = closeModal; // 모달 X 버튼 inline onclick 호환
 
 // ─── Category → Emoji mapping ───
 const CATEGORY_EMOJI = {
@@ -623,36 +608,31 @@ const CATEGORY_EMOJI = {
   '청소':'🧹', '주차':'🅿️', '기타':'📦'
 };
 
-// ─── Generate next asset ID ───
-function nextAssetId() {
-  const assets = getAssets();
-  const nums = assets.map(a => parseInt((a.id||'').replace(/\D/g,'')) || 0);
-  return 'A' + String(Math.max(0, ...nums) + 1).padStart(3, '0');
-}
-
 // ─── Individual Registration ───
-function submitAsset(e) {
+async function submitAsset(e) {
   e.preventDefault();
-  const assets = getAssets();
-  const newAsset = {
-    id: document.getElementById('f_assetId').value || nextAssetId(),
+  const category = document.getElementById('f_category').value;
+  const payload = {
+    id: document.getElementById('f_assetId').value.trim() || undefined, // 비우면 DB가 채번
     name: document.getElementById('f_name').value.trim(),
     model: document.getElementById('f_model').value.trim(),
     location: document.getElementById('f_location').value.trim(),
-    category: document.getElementById('f_category').value,
+    category,
     installed: document.getElementById('f_installed').value.replace('-', '.'),
     manager: document.getElementById('f_manager').value.trim(),
     memo: document.getElementById('f_memo').value.trim(),
-    emoji: CATEGORY_EMOJI[document.getElementById('f_category').value] || '📦',
+    emoji: CATEGORY_EMOJI[category] || '📦',
     reports: 0,
-    createdAt: new Date().toISOString()
   };
-  assets.push(newAsset);
-  saveAssets(assets);
-  closeModal('addModal');
-  e.target.reset();
-  showToast(`✅ "${newAsset.name}" 등록 완료`);
-  render();
+  try {
+    const created = await createAsset(payload);
+    closeModal('addModal');
+    e.target.reset();
+    showToast(`✅ "${created.name}" 등록 완료`);
+    render();
+  } catch (err) {
+    showToast('⚠️ 등록 실패: ' + err.message);
+  }
 }
 
 // ─── Excel Upload ───
@@ -677,7 +657,6 @@ function handleExcelFile(input) {
         memo: r['메모'] || '',
         emoji: CATEGORY_EMOJI[r['카테고리']] || '📦',
         reports: 0,
-        createdAt: new Date().toISOString()
       }));
       renderExcelPreview();
     } catch(err) { showToast('⚠️ 파일 읽기 실패: ' + err.message); }
@@ -689,7 +668,7 @@ function handleExcelFile(input) {
 function renderExcelPreview() {
   const cols = ['자산명','모델명','위치','카테고리','설치일','관리번호','담당자','메모'];
   let html = `<div class="excel-count">📋 ${pendingExcelAssets.length}건 감지됨</div>`;
-  html += '<div class="excel-preview"><table><tr>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr>';
+  html += '<div class="excel-preview"><table><tr>' + cols.map(c => `<th>${escapeHtml(c)}</th>`).join('') + '</tr>';
   pendingExcelAssets.slice(0, 10).forEach(a => {
     html += '<tr>' + [a.name, a.model, a.location, a.category, a.installed, a.id, a.manager, a.memo].map(v => `<td>${escapeHtml(v||'')}</td>`).join('') + '</tr>';
   });
@@ -699,18 +678,16 @@ function renderExcelPreview() {
   document.getElementById('excelSubmitBtn').style.display = 'block';
 }
 
-function submitExcelAssets() {
+async function submitExcelAssets() {
   if (pendingExcelAssets.length === 0) return;
-  const assets = getAssets();
-  let nextNum = Math.max(0, ...assets.map(a => parseInt((a.id||'').replace(/\D/g,'')) || 0));
-  pendingExcelAssets.forEach(a => {
-    if (!a.id) { nextNum++; a.id = 'A' + String(nextNum).padStart(3, '0'); }
-    assets.push(a);
-  });
-  saveAssets(assets);
-  showToast(`✅ ${pendingExcelAssets.length}건 일괄 등록 완료`);
-  closeModal('excelModal');
-  render();
+  try {
+    const created = await bulkCreateAssets(pendingExcelAssets);
+    showToast(`✅ ${created.length}건 일괄 등록 완료`);
+    closeModal('excelModal');
+    render();
+  } catch (err) {
+    showToast('⚠️ 일괄 등록 실패: ' + err.message);
+  }
 }
 
 // ─── Excel Template Download ───
@@ -726,17 +703,23 @@ function downloadTemplate() {
   XLSX.writeFile(wb, '자산등록_템플릿.xlsx');
 }
 
+// ─── Wire up form/buttons (module scope — no inline handlers) ───
+document.querySelector('#addModal form').addEventListener('submit', submitAsset);
+document.getElementById('excelSubmitBtn').addEventListener('click', submitExcelAssets);
+document.querySelector('.template-download').addEventListener('click', downloadTemplate);
+document.getElementById('dropZone').addEventListener('click', () => document.getElementById('excelFile').click());
+document.getElementById('excelFile').addEventListener('change', e => handleExcelFile(e.target));
+
 // ─── Drag & Drop ───
-document.addEventListener('DOMContentLoaded', () => {
-  const dz = document.getElementById('dropZone');
-  if (!dz) return;
+const dz = document.getElementById('dropZone');
+if (dz) {
   ['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('dragover'); }));
   ['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('dragover'); }));
   dz.addEventListener('drop', e => {
     const file = e.dataTransfer.files[0];
     if (file) { const dt = new DataTransfer(); dt.items.add(file); document.getElementById('excelFile').files = dt.files; handleExcelFile(document.getElementById('excelFile')); }
   });
-});
+}
 
 render();
 </script>

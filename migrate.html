@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>localStorage → Supabase 1회 이관</title>
+<style>
+  body { font-family: -apple-system, system-ui, sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; color: #1e293b; }
+  h1 { font-size: 20px; }
+  .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 12px 0; }
+  button { padding: 10px 20px; border-radius: 6px; border: 0; background: #6366f1; color: white; font-weight: 700; cursor: pointer; font-size: 14px; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  pre { background: #0f172a; color: #e2e8f0; padding: 12px; border-radius: 6px; font-size: 12px; overflow: auto; }
+  .ok { color: #10b981; }
+  .warn { color: #f59e0b; }
+  .err { color: #ef4444; }
+  small { color: #64748b; }
+</style>
+</head>
+<body>
+
+<h1>📦 localStorage → Supabase 1회 이관</h1>
+<p><small>이 페이지는 1회용 유틸리티입니다. 기존 브라우저의 localStorage에 쌓인 자산/신고를 Supabase로 옮깁니다. 같은 ID는 skip(이미 시드된 항목 보호).</small></p>
+
+<div class="card">
+  <h3>현재 localStorage 상태</h3>
+  <div id="ls-stat">로딩 중…</div>
+</div>
+
+<div class="card">
+  <button id="run">이관 실행</button>
+  <button id="clear" style="background:#ef4444;margin-left:8px">localStorage 초기화 (이관 후)</button>
+</div>
+
+<div class="card">
+  <h3>로그</h3>
+  <pre id="log">대기 중…</pre>
+</div>
+
+<p><small>이관이 끝나면 <a href="index.html">홈으로</a> 돌아가서 데이터가 보이는지 확인하세요.</small></p>
+
+<script type="module">
+import { supabase } from './lib/supabase.js';
+
+const $log = document.getElementById('log');
+const $stat = document.getElementById('ls-stat');
+let lines = [];
+function log(msg, cls = '') {
+  lines.push(cls ? `<span class="${cls}">${msg}</span>` : msg);
+  $log.innerHTML = lines.join('\n');
+}
+
+const lsAssets  = JSON.parse(localStorage.getItem('gs_assets')  || '[]');
+const lsReports = JSON.parse(localStorage.getItem('gs_reports') || '[]');
+$stat.innerHTML = `자산 ${lsAssets.length}건 · 신고 ${lsReports.length}건`;
+
+document.getElementById('run').addEventListener('click', async () => {
+  document.getElementById('run').disabled = true;
+  lines = [];
+  log('=== 이관 시작 ===');
+
+  // assets
+  if (lsAssets.length === 0) {
+    log('localStorage에 자산 없음 — skip', 'warn');
+  } else {
+    const payload = lsAssets.map(a => ({
+      id: a.id || undefined,
+      type: a.type || null,
+      category: a.category || null,
+      name: a.name,
+      model: a.model || null,
+      location: a.location || null,
+      installed: a.installed || null,
+      reports: a.reports || 0,
+      emoji: a.emoji || null,
+      manager: a.manager || null,
+      memo: a.memo || null,
+    }));
+    const { data, error } = await supabase
+      .from('assets')
+      .upsert(payload, { onConflict: 'id', ignoreDuplicates: true })
+      .select();
+    if (error) log('자산 이관 실패: ' + error.message, 'err');
+    else log(`✅ 자산 ${data?.length || 0}건 신규 INSERT (중복 ${lsAssets.length - (data?.length||0)}건 skip)`, 'ok');
+  }
+
+  // reports
+  if (lsReports.length === 0) {
+    log('localStorage에 신고 없음 — skip', 'warn');
+  } else {
+    const payload = lsReports.map(r => ({
+      id: r.id || undefined,
+      title: r.title,
+      category: r.category,
+      location: r.location,
+      status: r.status || '접수',
+      date: r.date || null,
+      asset_id: r.assetId || null,
+      description: r.description || null,
+      anonymous: !!r.anonymous,
+      timeline: r.timeline || [],
+    }));
+    const { data, error } = await supabase
+      .from('reports')
+      .upsert(payload, { onConflict: 'id', ignoreDuplicates: true })
+      .select();
+    if (error) log('신고 이관 실패: ' + error.message, 'err');
+    else log(`✅ 신고 ${data?.length || 0}건 신규 INSERT (중복 ${lsReports.length - (data?.length||0)}건 skip)`, 'ok');
+  }
+
+  log('=== 완료 ===');
+});
+
+document.getElementById('clear').addEventListener('click', () => {
+  if (!confirm('localStorage의 gs_reports / gs_assets / gs_assets_v 를 삭제합니다. 진행할까요?')) return;
+  localStorage.removeItem('gs_reports');
+  localStorage.removeItem('gs_assets');
+  localStorage.removeItem('gs_assets_v');
+  $stat.innerHTML = '<span class="ok">✅ localStorage 초기화 완료</span>';
+});
+</script>
+
+</body>
+</html>
