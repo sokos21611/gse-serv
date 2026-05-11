@@ -38,5 +38,4 @@
 ## 참고 파일
 
 - `CLAUDE.md` — 프로젝트 컨텍스트 (새 Claude가 자동 로드).
-- `index.html` / `report.html` / `status.html` / `admin.html` / `test.html` — 페이지 5개.
-- `test.html` — 시나리오 허브(개발용, 사용자 네비에 없음).
+- `index.html` / `report.html` / `status.html` / `admin.html` — 페이지 4개.
