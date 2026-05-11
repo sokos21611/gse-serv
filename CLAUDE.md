@@ -26,16 +26,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |---|---|---|
 | `gs_reports` | 신고 배열 | index(seed) / report(추가) / status(읽기) / admin(상태변경) |
 | `gs_assets` | 자산 배열 | index(seed) / admin(seed+CRUD) / report(참조) |
-| `gs_assets_v` | 자산 스키마 버전 | admin 전용 |
+| `gs_assets_v` | 자산 스키마 버전 (현재 `'4'`) | index/admin 공통 |
 
-### 자산 데이터의 두 계보 (주의)
+### 자산 스키마 (단일 계보, v4 기준)
 
-같은 "자산"이 파일마다 다르게 시드됨:
+`index.html`의 `ASSETS`와 `admin.html`의 `DEFAULT_ASSETS`가 **동일한 데이터**로 시드됨 (A001~A008, `type` 포함). 두 파일 모두 `gs_assets_v !== '4'`일 때만 시드를 덮어쓰고, 등록·엑셀 업로드 후에는 `saveAssets()`(admin) 또는 `setItem('gs_assets_v','4')` 유지로 **리셋되지 않음**.
 
-- `index.html`의 `ASSETS` — 레거시 ID(`B3-P01`, `A2-REST-M` 등) + `type` 필드. QR 딥링크(`?type=X&id=Y`)가 이 ID에 의존.
-- `admin.html`의 `DEFAULT_ASSETS` — 순차 ID(`A001`–`A008`), `type` 없음. `gs_assets_v !== '2'`이면 `gs_assets`를 **덮어씀**.
+스키마를 다시 손대려면:
+1. `ASSETS_VERSION` 상수를 `'4'`에서 다음 값으로 올리기 (index.html, admin.html 둘 다).
+2. `ASSETS` / `DEFAULT_ASSETS` 시드 수정.
+3. **버전을 올리면 사용자가 admin에서 등록한 자산도 리셋된다** — 데이터 보존이 필요하면 마이그레이션 함수 추가.
 
-결과: admin이 먼저 로드되면 index의 QR 딥링크 ID가 사라짐. `gs_assets_v`를 올리면 사용자 데이터도 같이 리셋. 자산 스키마를 손댈 때는 두 계보를 어떻게 합치거나 마이그레이션할지부터 결정할 것.
+`type` 필드는 `report.html`의 `typeMap`(projector/printer→it, restroom/room/pantry→facility, parking→parking)에서 카테고리 추론에 사용.
 
 ### report.html URL 파라미터 계약
 
