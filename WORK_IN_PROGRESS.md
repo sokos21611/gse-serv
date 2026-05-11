@@ -25,6 +25,7 @@
 ### 해결됨 (2026-05-11 코드 리뷰)
 
 - ~~자산 데이터 두 계보 통합~~ → admin 기준 단일 스키마(A001~A008 + `type`), `gs_assets_v='4'`로 통일. index/admin 모두 동일 시드 데이터 사용. 등록 후 리셋되던 `gs_assets_v` 불일치 버그(`!== '2'` vs `setItem '3'`)도 함께 수정 — `saveAssets()` 헬퍼로 일원화.
+- ~~`admin.html`의 깨진 `qr.html` 링크~~ → QR관리 버튼 제거 (`.action-btn.qr` CSS도 함께 삭제). 향후 QR 관리 UI는 admin 내부 모달로 신규 구현 권장.
 
 ## 아키텍처 핵심 (CLAUDE.md 요약)
 

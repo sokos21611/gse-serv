@@ -172,7 +172,6 @@ body {
   box-shadow: var(--shadow-md); cursor: pointer; border: none;
   font-family: inherit; transition: all var(--transition);
 }
-.action-btn.qr { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; }
 .action-btn.add { background: var(--surface); color: var(--primary); border: 1.5px solid var(--primary); }
 .action-btn.excel { background: var(--surface); color: #217346; border: 1.5px solid #217346; }
 
@@ -539,7 +538,6 @@ function renderAssets() {
   const assets = getAssets();
   document.getElementById('content').innerHTML = `
     <div class="asset-actions">
-      <a href="qr.html" class="action-btn qr">📱 QR관리</a>
       <button class="action-btn add" onclick="openModal('addModal')">➕ 등록</button>
       <button class="action-btn excel" onclick="openModal('excelModal')">📊 엑셀</button>
     </div>

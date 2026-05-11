@@ -49,5 +49,5 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### 기타 주의
 
 - **신고 ID**: `'RPT-' + (reports.length + 1).padStart(3,'0')`. 삭제 시 충돌 — 삭제 기능 추가하려면 ID 전략부터 바꿀 것.
-- **깨진 링크**: `qr.html`은 삭제됐지만 `admin.html`의 `📱 QR관리` 버튼이 아직 `qr.html`을 가리킴. 복원할지 링크 제거할지 결정 필요.
+- **QR 관리 UI 부재**: `qr.html`은 삭제됐고 `admin.html`의 QR관리 버튼도 제거됨. QR 진입은 `report.html?qr=1&...` 딥링크로만 이루어짐. 관리자용 QR 발급/관리 화면이 필요해지면 `admin.html` 내부 모달 또는 별도 페이지로 신규 구현 필요.
 - **test.html**은 개발용 시나리오 허브. 사용자 네비에 없고, QR 스캔/카테고리/익명 시나리오로 바로 진입.
