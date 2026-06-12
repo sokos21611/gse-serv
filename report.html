@@ -349,7 +349,17 @@ if (params.get('qr')) {
 // Pre-fill from params (legacy)
 if (!params.get('qr') && params.get('category')) {
   const cat = CATEGORIES.find(c => c.key === params.get('category'));
-  if (cat) { state.category = cat; state.step = 2; }
+  if (cat) {
+    state.category = cat;
+    state.step = 2;
+    // 즐겨찾기 딥링크: &sub=유형&loc=위치 → 상세 입력 단계로 바로 진입
+    const sub = params.get('sub');
+    if (sub && cat.subs.includes(sub)) {
+      state.subType = sub;
+      if (params.get('loc')) state.location = params.get('loc');
+      state.step = 3;
+    }
+  }
 }
 
 async function init() {
@@ -552,6 +562,7 @@ async function submitReport() {
       anonymous: state.anonymous,
     });
     state.reportId = created.id;
+    rememberSubmission(created.id);
     state.step = 5;
     render();
   } catch (err) {
@@ -559,6 +570,23 @@ async function submitReport() {
     btns.forEach(b => { b.disabled = false; b.textContent = '접수하기'; });
   }
 }
+// 기기 단위 개인화 기록 (데이터 본체는 Supabase, 여기는 선호 정보만)
+function rememberSubmission(reportId) {
+  try {
+    // 내 신고 ID (status.html "내 신고만" 필터용)
+    const myIds = JSON.parse(localStorage.getItem('gs_my_report_ids') || '[]');
+    myIds.unshift(reportId);
+    localStorage.setItem('gs_my_report_ids', JSON.stringify(myIds.slice(0, 100)));
+    // 자주 쓰는 신고 (홈 즐겨찾기 카드용)
+    const favs = JSON.parse(localStorage.getItem('gs_fav_reports') || '[]');
+    const key = `${state.category.key}|${state.subType}|${state.location}`;
+    const found = favs.find(f => f.k === key);
+    if (found) { found.count++; found.last = Date.now(); }
+    else favs.push({ k: key, count: 1, last: Date.now(), cat: state.category.key, emoji: state.category.emoji, sub: state.subType, loc: state.location });
+    localStorage.setItem('gs_fav_reports', JSON.stringify(favs.slice(0, 30)));
+  } catch (e) { console.warn('favorite save skipped', e); }
+}
+
 window.submitReport = submitReport;
 window.render = render;
 window.selectCategory = selectCategory;

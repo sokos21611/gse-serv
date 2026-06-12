@@ -741,6 +741,9 @@ if (dz) {
   });
 }
 
+// 다른 탭/앱에 갔다 돌아오면 최신 데이터로 갱신
+document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
+
 render();
 </script>
 </body>

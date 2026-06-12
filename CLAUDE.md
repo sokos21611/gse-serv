@@ -17,7 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 프로젝트 URL: `https://qujeakbaqqeqyllpdene.supabase.co`
 - 클라이언트 키 (publishable): `lib/supabase.js`에 인라인. anon 권한 + RLS로 보호.
 - 모든 페이지가 `lib/supabase.js`의 헬퍼(`listReports`, `createReport`, `listAssets`, `createAsset`, …)를 import해서 사용.
-- 더 이상 localStorage에 데이터를 저장하지 않음 (브라우저별 격리 문제 해소).
+- 더 이상 localStorage에 *데이터*를 저장하지 않음 (브라우저별 격리 문제 해소). 단 기기 단위 개인화 키 2개는 localStorage 사용: `gs_my_report_ids`(내가 접수한 신고 ID, status.html "내 신고만" 필터), `gs_fav_reports`(자주 쓰는 신고 콤보, index.html 즐겨찾기 카드).
 
 ### 스키마 (`supabase/schema.sql`)
 
@@ -45,6 +45,7 @@ JS는 `lib/supabase.js` 한 곳에서 공유. `admin.html`만 추가로 SheetJS 
 - `?qr=1&name=&model=&loc=&emoji=&aid=&cat=` — QR 스캔 경로. URL에 자산 정보가 모두 들어있어 DB 조회 없이 동작. `cat`이 주어지면 step 1 건너뛰고 step 2부터, QR hero 카드 표시.
 - `?type=X&id=Y` — 자산 연결 (Supabase `getAsset(id)` 조회 → 카테고리 자동 추론).
 - `?category=facility|environment|it|cleaning|parking|other` — 카테고리 프리셀렉트.
+- `?category=X&sub=유형&loc=위치` — 즐겨찾기 딥링크. `sub`가 해당 카테고리의 유효한 세부 유형이면 위치까지 채우고 step 3(상세 입력)으로 바로 진입.
 - `?anon=true` — 익명 모드 프리셀렉트.
 
 ### 기타 주의

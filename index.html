@@ -107,6 +107,32 @@ body {
 .quick-btn .label { font-size: 14px; font-weight: 800; letter-spacing: -0.2px; }
 .quick-btn .sublabel { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-weight: 500; }
 
+/* Favorite (자주 쓰는 신고) */
+.fav-row {
+  display: flex; gap: 10px; padding: 0 20px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.fav-row::-webkit-scrollbar { display: none; }
+.fav-card {
+  flex-shrink: 0; width: 150px;
+  background: var(--surface); border-radius: var(--radius-sm);
+  padding: 14px; box-shadow: var(--shadow-sm);
+  text-decoration: none; color: var(--text);
+  transition: all var(--transition); cursor: pointer;
+  position: relative;
+}
+.fav-card:active { transform: scale(0.96); background: var(--primary-light); }
+.fav-emoji { font-size: 26px; margin-bottom: 8px; }
+.fav-name { font-size: 13px; font-weight: 800; letter-spacing: -0.2px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fav-loc { font-size: 11px; color: var(--text-muted); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fav-count {
+  position: absolute; top: 12px; right: 12px;
+  font-size: 9px; font-weight: 800; color: var(--primary);
+  background: var(--primary-light); padding: 2px 7px; border-radius: 10px;
+}
+.fav-go { font-size: 11px; font-weight: 700; color: var(--primary); margin-top: 8px; }
+
 /* Section */
 .section { padding: 28px 20px 0; }
 .section-header {
@@ -295,12 +321,26 @@ function showError(err) {
   app.innerHTML = `<div style="padding:20px"><div class="empty-state"><div class="icon">⚠️</div><p>데이터 로드 실패<br><small>${escapeHtml(err.message)}</small></p></div></div>`;
 }
 
+// ── 기기 단위 개인화 (localStorage는 선호 정보만 — 데이터는 Supabase) ──
+function getFavorites() {
+  try {
+    return JSON.parse(localStorage.getItem('gs_fav_reports') || '[]')
+      .sort((a, b) => b.count - a.count || b.last - a.last)
+      .slice(0, 5);
+  } catch { return []; }
+}
+function getMyReportIds() {
+  try { return JSON.parse(localStorage.getItem('gs_my_report_ids') || '[]'); } catch { return []; }
+}
+
 // ── Home View ──
 async function renderHome() {
   const reports = await listReports();
   const recent = reports.slice(0, 3);
   const statusCounts = { '접수': 0, '처리중': 0, '완료': 0 };
   reports.forEach(r => { if (statusCounts[r.status] !== undefined) statusCounts[r.status]++; });
+  const favs = getFavorites();
+  const myCount = getMyReportIds().filter(id => reports.some(r => r.id === id)).length;
 
   app.innerHTML = `
     <div class="header">
@@ -331,10 +371,30 @@ async function renderHome() {
         <div class="icon status-icon">📋</div>
         <div>
           <div class="label">내 현황</div>
-          <div class="sublabel">처리 상태 확인</div>
+          <div class="sublabel">${myCount > 0 ? `내 신고 ${myCount}건` : '처리 상태 확인'}</div>
         </div>
       </a>
     </div>
+
+    ${favs.length > 0 ? `
+    <div class="section" style="padding-left:0;padding-right:0;">
+      <div class="section-header" style="padding:0 24px;">
+        <div class="section-title">⭐ 자주 쓰는 신고</div>
+      </div>
+      <div class="fav-row">
+        ${favs.map((f, i) => `
+          <a class="fav-card animate-in" style="animation-delay:${i * 0.05}s"
+             href="report.html?category=${encodeURIComponent(f.cat)}&sub=${encodeURIComponent(f.sub)}&loc=${encodeURIComponent(f.loc)}">
+            <div class="fav-count">${f.count}회</div>
+            <div class="fav-emoji">${escapeHtml(f.emoji)}</div>
+            <div class="fav-name">${escapeHtml(f.sub)}</div>
+            <div class="fav-loc">${escapeHtml(f.loc)}</div>
+            <div class="fav-go">바로 신고 →</div>
+          </a>
+        `).join('')}
+      </div>
+    </div>
+    ` : ''}
 
     <div class="section">
       <div class="section-header">
@@ -468,6 +528,11 @@ function formatDate(d) {
   if (diff < 7) return `${diff}일 전`;
   return d;
 }
+
+// 다른 탭/앱에 갔다 돌아오면 최신 데이터로 갱신
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && !(qrType && qrId)) renderHome().catch(showError);
+});
 </script>
 </body>
 </html>

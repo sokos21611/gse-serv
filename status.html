@@ -215,8 +215,8 @@ body {
   <p>접수된 신고의 처리 상태를 확인하세요</p>
 </div>
 
-<div id="stats"></div>
 <div id="filters"></div>
+<div id="stats"></div>
 <div id="list"></div>
 
 <!-- Modal -->
@@ -247,7 +247,12 @@ body {
 import { listReports, getReport } from './lib/supabase.js';
 
 let filter = '전체';
+let scope = '전체'; // '전체' | '내신고'
 let cachedReports = [];
+
+function getMyReportIds() {
+  try { return JSON.parse(localStorage.getItem('gs_my_report_ids') || '[]'); } catch { return []; }
+}
 
 function escapeHtml(s) {
   return String(s == null ? '' : s)
@@ -272,8 +277,20 @@ async function render() {
     document.getElementById('list').innerHTML = `<div style="padding:0 20px"><div class="empty-state"><div class="icon">⚠️</div><p>데이터 로드 실패<br><small>${escapeHtml(err.message)}</small></p></div></div>`;
     return;
   }
-  const counts = { '전체': reports.length, '접수': 0, '처리중': 0, '완료': 0 };
-  reports.forEach(r => { if (counts[r.status] !== undefined) counts[r.status]++; });
+  // 범위 토글 (전체 / 내 신고만 — 이 기기에서 접수한 신고)
+  const myIds = getMyReportIds();
+  document.getElementById('filters').innerHTML = `
+    <div class="filter-tabs" style="padding-bottom:0;">
+      <div class="filter-tab ${scope === '전체' ? 'active' : ''}" data-scope="전체">전체 신고</div>
+      <div class="filter-tab ${scope === '내신고' ? 'active' : ''}" data-scope="내신고">내 신고만${myIds.length ? ` (${myIds.length})` : ''}</div>
+    </div>`;
+  document.querySelectorAll('[data-scope]').forEach(el => {
+    el.addEventListener('click', () => { scope = el.dataset.scope; render(); });
+  });
+
+  const scoped = scope === '내신고' ? reports.filter(r => myIds.includes(r.id)) : reports;
+  const counts = { '전체': scoped.length, '접수': 0, '처리중': 0, '완료': 0 };
+  scoped.forEach(r => { if (counts[r.status] !== undefined) counts[r.status]++; });
 
   document.getElementById('stats').innerHTML = `
     <div class="stats-row">
@@ -288,7 +305,7 @@ async function render() {
     el.addEventListener('click', () => { filter = el.dataset.filter; render(); });
   });
 
-  const filtered = filter === '전체' ? reports : reports.filter(r => r.status === filter);
+  const filtered = filter === '전체' ? scoped : scoped.filter(r => r.status === filter);
 
   document.getElementById('list').innerHTML = `
     <div class="report-list" style="padding-top:14px;">
@@ -308,7 +325,7 @@ async function render() {
       `).join('') : `
         <div class="empty-state">
           <div class="icon">📭</div>
-          <p>"${escapeHtml(filter)}" 상태의 신고가 없습니다</p>
+          <p>${scope === '내신고' && filter === '전체' ? '이 기기에서 접수한 신고가 없습니다' : `"${escapeHtml(filter)}" 상태의 신고가 없습니다`}</p>
         </div>
       `}
     </div>`;
@@ -365,6 +382,9 @@ function closeModal() {
   document.body.style.overflow = '';
 }
 window.closeModal = closeModal; // inline onclick 호환
+
+// 다른 탭/앱에 갔다 돌아오면 최신 데이터로 갱신
+document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
 
 render();
 </script>
