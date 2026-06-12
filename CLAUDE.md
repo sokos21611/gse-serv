@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Supabase가 백엔드
 
-- 프로젝트 URL: `https://wavussrzhqzyircqpaiw.supabase.co`
+- 프로젝트 URL: `https://qujeakbaqqeqyllpdene.supabase.co`
 - 클라이언트 키 (publishable): `lib/supabase.js`에 인라인. anon 권한 + RLS로 보호.
 - 모든 페이지가 `lib/supabase.js`의 헬퍼(`listReports`, `createReport`, `listAssets`, `createAsset`, …)를 import해서 사용.
 - 더 이상 localStorage에 데이터를 저장하지 않음 (브라우저별 격리 문제 해소).

@@ -4,7 +4,7 @@
 
 ## 현재 상태
 
-- **Supabase로 백엔드 전환** (이전: localStorage). 프로젝트 `gse-serv`, URL `https://wavussrzhqzyircqpaiw.supabase.co`, region Singapore, 무료 티어.
+- **Supabase로 백엔드 전환** (이전: localStorage). 프로젝트 `gse-serv`, URL `https://qujeakbaqqeqyllpdene.supabase.co`, region Seoul, 무료 티어.
 - 4개 페이지(index/report/status/admin) 모두 `lib/supabase.js`를 import해서 데이터 R/W. ES module 기반.
 - `migrate.html` — 기존 브라우저의 localStorage 데이터를 Supabase로 1회 이관하는 유틸.
 
