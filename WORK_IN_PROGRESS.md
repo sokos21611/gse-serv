@@ -22,7 +22,8 @@
 - **Realtime 구독**: `status.html`/`admin.html`에 `supabase.channel().on('postgres_changes', ...)` 도입하면 다중 사용자 실시간 동기화 가능. 지금은 페이지 로드 시점 스냅샷.
 - **assets.reports 자동 카운트**: 현재 정적 컬럼. 트리거로 신고 생성/삭제 시 자동 증감 가능.
 - **디자인 토큰 중복**: `:root { --primary ... }` 와 `.bottom-nav`가 4개 HTML에 복붙. 공유 CSS로 빼면 유지보수 비용 절감.
-- **Vercel 배포**: `.vercel/project.json` (이전 계정 소유) 재연결 또는 `chongmu-service` 프로젝트 transfer.
+- **GitHub/Vercel 새 계정 이전**: 이전 origin(`dearsokos/gse-chongmu`)은 404 — 새 계정에 레포 생성 후 `git remote set-url origin <새 URL>` → `git push -u origin main`. Vercel은 새 계정에서 해당 레포 Import (정적 사이트라 빌드 설정 불필요, Framework Preset: Other). `.vercel/`은 git 추적 해제됨 — 새 계정에서 `vercel link` 시 자동 재생성.
+- **QR 딥링크 도메인 주의**: 이미 인쇄/배포된 QR 코드가 있다면 이전 Vercel 도메인을 가리킴. 새 배포 도메인이 달라지면 기존 QR 전부 재발급 필요 (또는 커스텀 도메인으로 통일).
 
 ### 해결됨
 

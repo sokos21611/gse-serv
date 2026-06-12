@@ -1,0 +1,7 @@
+# Vercel 로컬 링크 정보 (계정별 projectId/orgId — 커밋 금지)
+.vercel/
+
+# 에디터/OS 임시파일
+.DS_Store
+Thumbs.db
+*.tmp
